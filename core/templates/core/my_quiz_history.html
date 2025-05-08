@@ -1,0 +1,92 @@
+<h2>📘 My Quiz Dashboard</h2>
+
+<p><strong>Total Quizzes Taken:</strong> {{ analytics.total_quizzes }}</p>
+<p><strong>Average Score:</strong> {{ analytics.avg_score|floatformat:2 }}</p>
+
+<hr>
+
+<h3>📝 Quiz Attempts</h3>
+<h3>📊 Performance Charts</h3>
+
+<canvas id="scoreBarChart" width="400" height="200"></canvas>
+<canvas id="scorePieChart" width="400" height="200" class="mt-4"></canvas>
+
+<script>
+    // Get the chart data from the JSON string
+    const chartData = {{ chart_data|safe }};
+    
+    // Extract labels and data
+    const labels = chartData.map(item => item.quiz__title);
+    const data = chartData.map(item => item.score);
+
+    // Bar Chart
+    const barCtx = document.getElementById('scoreBarChart').getContext('2d');
+    new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Quiz Scores',
+                data: data,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 10
+                }
+            }
+        }
+    });
+
+    // Pie Chart
+    const pieCtx = document.getElementById('scorePieChart').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Score Distribution',
+                data: data,
+                backgroundColor: [
+                    '#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40'
+                ]
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+</script>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>Quiz</th>
+            <th>Score</th>
+            <th>Total</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    
+    <tbody>
+        {% for result in results %}
+        <tr>
+            <td>{{ result.quiz.title }}</td>
+            <td>{{ result.score }}</td>
+            <td>{{ result.total_questions }}</td>
+            <td>{{ result.taken_at|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No quiz attempts found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

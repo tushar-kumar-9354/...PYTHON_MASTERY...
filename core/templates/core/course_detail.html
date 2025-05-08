@@ -1,0 +1,16 @@
+<h2>{{ course.title }}</h2>
+<p>{{ course.description }}</p>
+
+<h3>Lessons:</h3>
+<ul>
+    {% for lesson in course.lessons.all %}
+        <li>
+            Lesson {{ forloop.counter }}:
+            <a href="{% url 'core:lesson_detail' course_id=course.id lesson_id=lesson.id %}">
+                {{ lesson.title }}
+            </a>
+        </li>
+    {% empty %}
+        <li>No lessons available for this course yet.</li>
+    {% endfor %}
+</ul>

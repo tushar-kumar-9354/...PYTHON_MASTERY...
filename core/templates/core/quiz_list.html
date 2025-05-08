@@ -1,0 +1,21 @@
+<h2>Quiz Result - {{ quiz.title }}</h2>
+<p>You scored {{ score }} out of {{ total }}</p>
+
+{% for result in results %}
+    <div>
+        <strong>Q: {{ result.question.question_text }}</strong><br>
+
+        <span style="color: {% if result.selected_option == result.correct_option %}green{% else %}red{% endif %};">
+            Your Answer: {{ result.selected_option.option_text if result.selected_option else "Not Answered" }}
+        </span><br>
+
+        {% if result.selected_option != result.correct_option %}
+            <span style="color: green;">
+                Correct Answer: {{ result.correct_option.option_text }}
+            </span>
+        {% endif %}
+    </div>
+    <hr>
+{% endfor %}
+
+<a href="{% url 'course_list' %}">🔙 Back to Courses</a>

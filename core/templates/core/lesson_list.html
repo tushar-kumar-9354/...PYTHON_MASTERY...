@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lessons in {{ course.title }} | PyMastery</title>
+</head>
+<body>
+    <h1>Lessons for: {{ course.title }}</h1>
+    <ul>
+        {% for lesson in lessons %}
+            <li>{{ lesson.title }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

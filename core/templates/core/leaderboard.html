@@ -1,0 +1,41 @@
+
+<div class="container mt-4">
+  <h2 class="text-primary">🏆 Leaderboard</h2>
+  <table class="table table-bordered table-striped">
+    <thead class="table-dark">
+      <tr>
+        <th>Rank</th>
+        <th>User</th>
+        <th>Quiz</th>
+        <th>Best Score</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in top_scores %}
+      <tr>
+        <td>
+          {{ entry.rank }}
+          {% if entry.rank == 1 %}
+            🥇
+          {% elif entry.rank == 2 %}
+            🥈
+          {% elif entry.rank == 3 %}
+            🥉
+          {% endif %}
+        </td>
+        <td>{{ entry.user__username }}</td>
+        <td>{{ entry.quiz__title }}</td>
+        <td>{{ entry.best_score }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">No data yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if user_rank %}
+    <div class="alert alert-info">
+      👤 You are currently ranked: <strong>#{{ user_rank }}</strong>
+    </div>
+  {% endif %}
+</div>

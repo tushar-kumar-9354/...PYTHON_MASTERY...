@@ -1,0 +1,12 @@
+
+<div class="container py-4">
+  <h2 class="text-primary">{{ lesson.title }}</h2>
+  <div class="mt-3">
+    {{ lesson.content|safe }}
+  </div>
+
+  <div class="mt-4">
+    <a href="{% url 'take_quiz' lesson.id %}" class="btn btn-success">Take Quiz</a>
+  </div>
+</div>
+

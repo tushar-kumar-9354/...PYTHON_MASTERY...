@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Courses | PyMastery</title>
+</head>
+<body>
+    <h1>Available Courses</h1>
+    <ul>
+        {% for course in courses %}
+            <li>
+                <a href="{% url 'lesson_list' course.id %}">{{ course.title }}</a>
+                <p>{{ course.description }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
