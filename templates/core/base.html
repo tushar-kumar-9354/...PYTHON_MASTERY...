@@ -1,0 +1,54 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>{% block title %}PyMastery{% endblock %}</title>
+
+  <!-- Tailwind CSS via CDN (use this OR compiled main.css below) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- OR use your compiled static CSS (if you have it) -->
+  {# <link href="{% static 'css/main.css' %}" rel="stylesheet"> #}
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col font-sans">
+
+  <!-- Navbar -->
+  <nav class="bg-white shadow">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="{% url 'home' %}" class="text-2xl font-bold text-blue-700">PyMastery</a>
+      <div class="space-x-4">
+        {% if user.is_authenticated %}
+          <span class="text-sm text-gray-600">Hi, {{ user.username }}</span>
+          <a href="{% url 'logout' %}" class="text-blue-600 hover:underline">Logout</a>
+        {% else %}
+          <a href="{% url 'login' %}" class="text-blue-600 hover:underline">Login</a>
+          <a href="{% url 'signup' %}" class="text-blue-600 hover:underline">Sign Up</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Content -->
+  <main class="flex-grow max-w-5xl mx-auto px-4 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white shadow-inner py-4 mt-10">
+    <div class="max-w-6xl mx-auto text-center text-sm text-gray-500">
+      &copy; {% now "Y" %} PyMastery. Built with ❤️ by Tushar.
+    </div>
+  </footer>
+
+  <!-- HTMX Script -->
+  <script src="https://unpkg.com/htmx.org@1.9.5"></script>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

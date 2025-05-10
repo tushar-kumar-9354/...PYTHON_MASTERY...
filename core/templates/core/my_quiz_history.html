@@ -1,92 +1,105 @@
-<h2>📘 My Quiz Dashboard</h2>
+<!-- Section Heading -->
+<h2 class="text-2xl font-semibold mb-4">📘 My Quiz Dashboard</h2>
 
-<p><strong>Total Quizzes Taken:</strong> {{ analytics.total_quizzes }}</p>
-<p><strong>Average Score:</strong> {{ analytics.avg_score|floatformat:2 }}</p>
+<p class="mb-2"><strong>Total Quizzes Taken:</strong> {{ analytics.total_quizzes }}</p>
+<p class="mb-6"><strong>Average Score:</strong> {{ analytics.avg_score|floatformat:2 }}</p>
 
-<hr>
+<hr class="my-6">
 
-<h3>📝 Quiz Attempts</h3>
-<h3>📊 Performance Charts</h3>
+<h3 class="text-xl font-semibold mb-4">📊 Performance Charts</h3>
 
-<canvas id="scoreBarChart" width="400" height="200"></canvas>
-<canvas id="scorePieChart" width="400" height="200" class="mt-4"></canvas>
+<!-- Chart Containers styled to match table width -->
+<div class="w-full max-w-3xl mx-auto">
+  <canvas id="scoreBarChart" class="w-full h-64"></canvas>
+</div>
+
+<div class="w-full max-w-3xl mx-auto mt-8">
+  <canvas id="scorePieChart" class="w-full h-64"></canvas>
+</div>
+
+<!-- Chart.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    // Get the chart data from the JSON string
-    const chartData = {{ chart_data|safe }};
-    
-    // Extract labels and data
-    const labels = chartData.map(item => item.quiz__title);
-    const data = chartData.map(item => item.score);
+  const chartData = {{ chart_data|safe }};
+  const labels = chartData.map(item => item.quiz__title);
+  const data = chartData.map(item => item.score);
 
-    // Bar Chart
-    const barCtx = document.getElementById('scoreBarChart').getContext('2d');
-    new Chart(barCtx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Quiz Scores',
-                data: data,
-                backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 10
-                }
-            }
+  const barCtx = document.getElementById('scoreBarChart').getContext('2d');
+  new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Quiz Scores',
+        data: data,
+        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 10
         }
-    });
+      },
+      plugins: {
+        legend: {
+          display: false
+        }
+      }
+    }
+  });
 
-    // Pie Chart
-    const pieCtx = document.getElementById('scorePieChart').getContext('2d');
-    new Chart(pieCtx, {
-        type: 'pie',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Score Distribution',
-                data: data,
-                backgroundColor: [
-                    '#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40'
-                ]
-            }]
-        },
-        options: {
-            responsive: true
-        }
-    });
+  const pieCtx = document.getElementById('scorePieChart').getContext('2d');
+  new Chart(pieCtx, {
+    type: 'pie',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: data,
+        backgroundColor: [
+          '#ff6384', '#36a2eb', '#cc65fe', '#ffce56',
+          '#4bc0c0', '#9966ff', '#ff9f40'
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
 </script>
 
-<table border="1">
-    <thead>
-        <tr>
-            <th>Quiz</th>
-            <th>Score</th>
-            <th>Total</th>
-            <th>Date</th>
-        </tr>
+<!-- Table for Quiz Results -->
+<h3 class="text-xl font-semibold mt-12 mb-4">📝 Quiz Attempts</h3>
+<div class="overflow-x-auto">
+  <table class="w-full max-w-3xl mx-auto table-auto border border-gray-300 shadow">
+    <thead class="bg-gray-100">
+      <tr class="text-left">
+        <th class="p-2 border">Quiz</th>
+        <th class="p-2 border">Score</th>
+        <th class="p-2 border">Total</th>
+        <th class="p-2 border">Date</th>
+      </tr>
     </thead>
-    
     <tbody>
-        {% for result in results %}
-        <tr>
-            <td>{{ result.quiz.title }}</td>
-            <td>{{ result.score }}</td>
-            <td>{{ result.total_questions }}</td>
-            <td>{{ result.taken_at|date:"Y-m-d H:i" }}</td>
+      {% for result in results %}
+        <tr class="border-t">
+          <td class="p-2 border">{{ result.quiz.title }}</td>
+          <td class="p-2 border">{{ result.score }}</td>
+          <td class="p-2 border">{{ result.total_questions }}</td>
+          <td class="p-2 border">{{ result.taken_at|date:"Y-m-d H:i" }}</td>
         </tr>
-        {% empty %}
+      {% empty %}
         <tr>
-            <td colspan="4">No quiz attempts found.</td>
+          <td colspan="4" class="p-4 text-center text-gray-500">No quiz attempts found.</td>
         </tr>
-        {% endfor %}
+      {% endfor %}
     </tbody>
-</table>
+  </table>
+</div>

@@ -13,7 +13,7 @@ class Course(models.Model):
 
 # Model for Lessons
 from django.db import models
-from ckeditor.fields import RichTextField  # if using CKEditor
+from ckeditor.fields import RichTextField  # type: ignore # if using CKEditor
 
 class Lesson(models.Model):
     course = models.ForeignKey('Course', on_delete=models.CASCADE, related_name='lessons')

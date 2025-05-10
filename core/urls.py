@@ -14,5 +14,7 @@ urlpatterns = [
     path('my-quiz-history/', views.my_quiz_history, name='my_quiz_history'),
     path('leaderboard/', views.leaderboard, name='leaderboard'),
     path('courses/<int:course_id>/lessons/<int:lesson_id>/', views.lesson_detail, name='lesson_detail'),
+    # core/urls.py
+    path('ai/explain/', views.get_gemini_explanation, name='ai_explain')
 
 ]

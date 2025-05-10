@@ -1,12 +1,92 @@
+{% load static %}
 
-<div class="container py-4">
-  <h2 class="text-primary">{{ lesson.title }}</h2>
-  <div class="mt-3">
-    {{ lesson.content|safe }}
-  </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <div class="mt-4">
-    <a href="{% url 'take_quiz' lesson.id %}" class="btn btn-success">Take Quiz</a>
-  </div>
+  <title>{{ lesson.title }} | PyMastery</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.5"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen font-sans">
+
+  <!-- Header -->
+  <header class="bg-white shadow mb-8">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="{% url 'home' %}" class="text-2xl font-bold text-blue-700">PyMastery</a>
+      <div class="space-x-4">
+        {% if user.is_authenticated %}
+          <span class="text-sm text-gray-600">Hi, {{ user.username }}</span>
+          <a href="{% url 'logout' %}" class="text-blue-600 hover:underline">Logout</a>
+        {% else %}
+          <a href="{% url 'login' %}" class="text-blue-600 hover:underline">Login</a>
+          <a href="{% url 'signup' %}" class="text-blue-600 hover:underline">Sign Up</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-5xl mx-auto px-4 py-6">
+    <h1 class="text-3xl font-bold mb-4">{{ lesson.title }}</h1>
+
+    <div class="prose max-w-none">
+      {{ lesson.content|safe }}
+    </div>
+
+    <hr class="my-10">
+
+    <!-- 🤖 Gemini AI Code Explainer -->
+    <!-- 🤖 Gemini AI Code Explainer Section -->
+<h2 class="text-xl font-semibold mb-2">🤖 Need Help Understanding This Code?</h2>
+
+<form
+  id="ai-form"
+  hx-post="{% url 'ai_explain' %}"
+  hx-target="#ai-result"
+  hx-swap="innerHTML"
+  class="space-y-4"
+>
+  {% csrf_token %}
+  <textarea 
+    name="code_snippet" 
+    rows="6" 
+    class="w-full p-3 border rounded shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+    placeholder="Paste your Python code here..."
+  ></textarea>
+  <button 
+    type="submit" 
+    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+    hx-indicator="#loading-spinner"
+  >
+    <span id="button-text">Ask Gemini AI</span>
+    <span id="loading-spinner" class="htmx-indicator ml-2">
+      <svg class="animate-spin h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+    </span>
+  </button>
+</form>
+
+<!-- Response Container -->
+<div id="ai-result" class="mt-6">
+  <!-- Response will appear here with the styling below -->
+  <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 whitespace-pre-wrap font-mono text-sm"></div>
 </div>
 
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white mt-12 py-4 text-center text-sm text-gray-500">
+    &copy; {% now "Y" %} PyMastery. Built with ❤️ by Tushar.
+  </footer>
+
+</body>
+</html>
