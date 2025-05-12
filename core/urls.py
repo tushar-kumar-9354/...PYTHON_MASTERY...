@@ -15,6 +15,9 @@ urlpatterns = [
     path('leaderboard/', views.leaderboard, name='leaderboard'),
     path('courses/<int:course_id>/lessons/<int:lesson_id>/', views.lesson_detail, name='lesson_detail'),
     # core/urls.py
-    path('ai/explain/', views.get_gemini_explanation, name='ai_explain')
+    path('ai/explain/', views.get_gemini_explanation, name='ai_explain'),
+    path('lesson/<int:lesson_id>/generate_quiz/', views.generate_ai_quiz, name='generate_ai_quiz'),
+    path('lesson/<int:lesson_id>/save_ai_quiz/', views.save_ai_quiz, name='save_ai_quiz'),
 
+    
 ]

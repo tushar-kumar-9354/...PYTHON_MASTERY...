@@ -1,0 +1,26 @@
+
+
+
+<h2>🧠 AI Quiz Preview — {{ lesson.title }}</h2>
+<p><strong>Difficulty:</strong> {{ difficulty }} | <strong>Questions:</strong> {{ num_questions }}</p>
+
+<form method="POST" action="{% url 'save_ai_quiz' lesson.id %}">
+  {% csrf_token %}
+  <input type="hidden" name="difficulty" value="{{ difficulty }}">
+  <input type="hidden" name="quiz_data_json" value='{{ quiz_data|safe|escapejs }}'>
+
+  {% for q in quiz_data %}
+    <div style="margin-bottom: 25px;">
+      <strong>Q{{ forloop.counter }}:</strong> {{ q.question }}
+      <ul>
+        {% for opt in q.options %}
+          <li>{{ opt.text }} {% if opt.is_correct %}<span style="color: green;">✔</span>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endfor %}
+
+  <button type="submit">✅ Save Quiz to Lesson</button>
+  <a href="{% url 'lesson_detail' lesson.course.id lesson.id %}">❌ Cancel</a>
+</form>
+

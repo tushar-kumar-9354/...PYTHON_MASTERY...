@@ -13,12 +13,12 @@ class Course(models.Model):
 
 # Model for Lessons
 from django.db import models
-from ckeditor.fields import RichTextField  # type: ignore # if using CKEditor
+content = models.TextField()  # Use TextField for plain text content
 
 class Lesson(models.Model):
     course = models.ForeignKey('Course', on_delete=models.CASCADE, related_name='lessons')
     title = models.CharField(max_length=200)
-    content = RichTextField()  # Rich text support
+    content = models.TextField()  # Use TextField for plain text content
     order = models.PositiveIntegerField(default=0)
 
     def __str__(self):

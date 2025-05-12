@@ -80,6 +80,25 @@
   <!-- Response will appear here with the styling below -->
   <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 whitespace-pre-wrap font-mono text-sm"></div>
 </div>
+<hr>
+<hr>
+<h4>🧠 Generate AI Quiz</h4>
+<form method="POST" action="{% url 'generate_ai_quiz' lesson.id %}">
+  {% csrf_token %}
+  <label>Difficulty:</label>
+  <select name="difficulty">
+    <option value="easy">Easy</option>
+    <option value="medium" selected>Medium</option>
+    <option value="hard">Hard</option>
+    <option value="mixed">Mixed</option>
+  </select>
+
+  <label>Number of Questions:</label>
+  <input type="number" name="num_questions" value="3" min="1" max="10">
+
+  <button type="submit">🚀 Generate Quiz</button>
+</form>
+
 
   </main>
 

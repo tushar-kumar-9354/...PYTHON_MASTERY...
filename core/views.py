@@ -235,3 +235,202 @@ def get_gemini_explanation(request):
             return JsonResponse({'error': f'AI error: {str(e)}'}, status=500)
 
     return HttpResponseBadRequest("Only POST requests are allowed.")
+import requests
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
+from core.models import Lesson, Quiz, Question, Option
+from django.views.decorators.csrf import csrf_exempt
+import json
+# === Replace with your actual Gemini API key ===
+GEMINI_API_KEY = "AIzaSyDUKAYNttTpvyilioaF9BfbPDEmw6g2ljQ"
+
+def generate_prompt(title, content, difficulty, num_questions):
+    return f"""
+Generate {num_questions} multiple-choice questions for a Python tutorial.
+
+Lesson title: {title}
+Difficulty: {difficulty}
+Format: Return only JSON in this format:
+[
+  {{
+    "question": "string",
+    "options": [
+      {{ "text": "string", "is_correct": true/false }},
+      ...
+    ]
+  }}
+]
+
+Lesson content:
+{content}
+"""
+
+
+import json
+import requests
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
+
+from core.models import Lesson, Quiz, Question, Option
+
+# === Your Gemini API key (make sure this is set in env or settings in prod) ===
+GEMINI_API_KEY = "AIzaSyDUKAYNttTpvyilioaF9BfbPDEmw6g2ljQ"
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib import messages
+import requests
+import json
+
+from core.models import Lesson
+
+GEMINI_API_KEY = "AIzaSyDUKAYNttTpvyilioaF9BfbPDEmw6g2ljQ"  # Replace with your actual key
+
+def generate_prompt(title, content, difficulty, num_questions):
+    return f"""
+Generate {num_questions} multiple-choice questions for a Python tutorial.
+
+Lesson title: {title}
+Difficulty: {difficulty}
+Format: Return only JSON in this format:
+[
+  {{
+    "question": "string",
+    "options": [
+      {{ "text": "string", "is_correct": true/false }},
+      ...
+    ]
+  }}
+]
+
+Lesson content:
+{content}
+"""
+
+
+
+
+### ✅ Full Code for `generate_ai_quiz` (with safe cleaning + preview)
+
+
+import json
+import re
+import requests
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib import messages
+from core.models import Lesson
+
+# Replace with your actual Gemini API key
+GEMINI_API_KEY = "AIzaSyDUKAYNttTpvyilioaF9BfbPDEmw6g2ljQ"
+
+def generate_prompt(title, content, difficulty, num_questions):
+    return f"""
+Generate {num_questions} multiple-choice questions for a Python tutorial.
+
+Lesson title: {title}
+Difficulty: {difficulty}
+Format: Return only JSON in this format:
+[
+  {{
+    "question": "string",
+    "options": [
+      {{ "text": "string", "is_correct": true/false }},
+      ...
+    ]
+  }}
+]
+
+Lesson content:
+{content}
+"""
+
+@csrf_exempt
+def generate_ai_quiz(request, lesson_id):
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+
+    if request.method == "POST":
+        difficulty = request.POST.get("difficulty", "medium")
+        try:
+            num_questions = int(request.POST.get("num_questions", 3))
+        except ValueError:
+            num_questions = 3
+
+        trimmed_content = lesson.content[:4000]
+        prompt = generate_prompt(lesson.title, trimmed_content, difficulty, num_questions)
+
+        try:
+            response = requests.post(
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+                params={"key": GEMINI_API_KEY},
+                headers={"Content-Type": "application/json"},
+                json={"contents": [{"parts": [{"text": prompt}]}]}
+            )
+
+            result = response.json()
+            print("🔍 Gemini Full Response:", json.dumps(result, indent=2))  # Debug
+
+            if "candidates" not in result or not result["candidates"]:
+                messages.error(request, "❌ Gemini returned no content.")
+                return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
+
+            output = result["candidates"][0]["content"]["parts"][0].get("text", "").strip()
+            if not output:
+                raise ValueError("Gemini response was empty.")
+
+            # ✅ Remove Markdown-style ```json block
+            output_cleaned = re.sub(r"^```(?:json)?\n?", "", output)
+            output_cleaned = re.sub(r"\n?```$", "", output_cleaned.strip())
+
+            quiz_data = json.loads(output_cleaned)
+
+            return render(request, "core/ai_quiz_preview.html", {
+                "lesson": lesson,
+                "quiz_data": quiz_data,
+                "difficulty": difficulty,
+                "num_questions": num_questions
+            })
+
+        except Exception as e:
+            print("❌ Failed to parse Gemini output:", e)
+            messages.error(request, "❌ AI returned invalid quiz format.")
+            return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
+
+    return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
+
+
+from core.models import Quiz, Question, Option
+
+@csrf_exempt
+def save_ai_quiz(request, lesson_id):
+    if request.method == "POST":
+        lesson = get_object_or_404(Lesson, id=lesson_id)
+        difficulty = request.POST.get("difficulty", "medium")
+        quiz_data_json = request.POST.get("quiz_data_json", "")
+
+        try:
+            quiz_data = json.loads(quiz_data_json)
+            quiz = Quiz.objects.create(
+                lesson=lesson,
+                title=f"{lesson.title} — AI {difficulty.capitalize()} Quiz",
+                description=f"Generated with AI"
+            )
+
+            for q in quiz_data:
+                question = Question.objects.create(quiz=quiz, question_text=q["question"])
+                for opt in q["options"]:
+                    Option.objects.create(
+                        question=question,
+                        option_text=opt["text"],
+                        is_correct=opt["is_correct"]
+                    )
+
+            messages.success(request, "✅ Quiz saved successfully.")
+            return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
+
+        except Exception as e:
+            print("❌ Failed to save quiz:", e)
+            messages.error(request, "❌ Failed to save quiz.")
+            return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
+
+    return redirect("course_list")

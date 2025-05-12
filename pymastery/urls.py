@@ -5,7 +5,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),  # 👈 all homepage routes in 'core'
     path('accounts/', include('django.contrib.auth.urls')),  # 👈 Add this
-    path('ckeditor/', include('ckeditor_uploader.urls')),
+    
 
 ]
 from django.conf import settings
