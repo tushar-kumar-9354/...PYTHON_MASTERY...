@@ -204,10 +204,13 @@ def my_quiz_history(request):
 
 
 # ✅ Leaderboard with ranking
+from django.db.models import F, Max, Window
+from django.db.models.functions import Rank
+
 def leaderboard(request):
     top_scores = (
         QuizResult.objects
-        .values('user__username', 'quiz__title')
+        .values('user__username', 'lesson__title')  # ✅ FIXED: 'quiz__title' → 'lesson__title'
         .annotate(best_score=Max('score'))
         .annotate(rank=Window(expression=Rank(), order_by=F('best_score').desc()))
         .order_by('rank')[:10]
@@ -230,6 +233,7 @@ def leaderboard(request):
         'top_scores': top_scores,
         'user_rank': user_rank
     })
+
 
 
 # ✅ Admin-only course creation
