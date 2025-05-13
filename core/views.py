@@ -180,6 +180,7 @@ def custom_login_view(request):
 # ✅ My quiz history with analytics
 @login_required
 def my_quiz_history(request):
+    
     results = QuizResult.objects.filter(user=request.user)\
                 .select_related('lesson')\
                 .order_by('-submitted_at')
@@ -190,10 +191,11 @@ def my_quiz_history(request):
     )
 
     chart_data = [
-        {'quiz__title': r.quiz.title, 'score': r.score}
+        {'quiz__title': r.lesson.title, 'score': r.score}
+
         for r in results
     ]
-
+    
     return render(request, 'core/my_quiz_history.html', {
         'results': results,
         'analytics': analytics,

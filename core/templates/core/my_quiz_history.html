@@ -88,18 +88,19 @@
       </tr>
     </thead>
     <tbody>
-      {% for result in results %}
-        <tr class="border-t">
-          <td class="p-2 border">{{ result.quiz.title }}</td>
-          <td class="p-2 border">{{ result.score }}</td>
-          <td class="p-2 border">{{ result.total_questions }}</td>
-          <td class="p-2 border">{{ result.taken_at|date:"Y-m-d H:i" }}</td>
-        </tr>
-      {% empty %}
-        <tr>
-          <td colspan="4" class="p-4 text-center text-gray-500">No quiz attempts found.</td>
-        </tr>
-      {% endfor %}
-    </tbody>
+  {% for result in results %}
+    <tr class="border-t">
+      <td class="p-2 border">{{ result.lesson.title }}</td>  <!-- ✅ From QuizResult -->
+      <td class="p-2 border">{{ result.score }}</td>          <!-- ✅ From QuizResult -->
+      <td class="p-2 border">{{ result.total }}</td>          <!-- ✅ Correct field name -->
+      <td class="p-2 border">{{ result.submitted_at|date:"Y-m-d H:i" }}</td>  <!-- ✅ Correct -->
+    </tr>
+  {% empty %}
+    <tr>
+      <td colspan="4" class="p-4 text-center text-gray-500">No quiz attempts found.</td>
+    </tr>
+  {% endfor %}
+</tbody>
+
   </table>
 </div>
