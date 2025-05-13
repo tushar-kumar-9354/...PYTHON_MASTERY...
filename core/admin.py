@@ -23,3 +23,5 @@ admin.site.register(Lesson, LessonAdmin)
 admin.site.register(Quiz, QuizAdmin)
 admin.site.register(Question, QuestionAdmin)
 admin.site.register(QuizResult)
+from django.contrib import admin
+

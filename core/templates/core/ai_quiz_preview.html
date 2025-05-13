@@ -1,26 +1,69 @@
+{# templates/core/ai_quiz_preview.html #}
+{% load static %}
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ lesson.title }} – AI Quiz ({{ difficulty|capfirst }})</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; color: #333; }
+    .quiz-container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .question { margin-bottom: 30px; }
+    .options label { display: block; background: #eee; padding: 10px; margin-bottom: 8px; border-radius: 5px; cursor: pointer; transition: background 0.3s; }
+    .options input { margin-right: 10px; }
+    .btn { padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 20px; }
+    .btn:hover { background: #218838; }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <h1>{{ lesson.title }} – AI Quiz ({{ difficulty|capfirst }})</h1>
 
+    <form id="quiz-form"
+          method="POST"
+          action="{% url 'save_ai_quiz' lesson.id %}">
+      {% csrf_token %}
 
-<h2>🧠 AI Quiz Preview — {{ lesson.title }}</h2>
-<p><strong>Difficulty:</strong> {{ difficulty }} | <strong>Questions:</strong> {{ num_questions }}</p>
+      {# Embed valid JSON quiz data #}
+      <script id="quiz-data-json" type="application/json">
+        {{ quiz_json|safe }}
+      </script>
+      <input type="hidden" name="quiz_data_json" id="hidden-json" value="" />
+      <input type="hidden" name="difficulty" value="{{ difficulty }}" />
 
-<form method="POST" action="{% url 'save_ai_quiz' lesson.id %}">
-  {% csrf_token %}
-  <input type="hidden" name="difficulty" value="{{ difficulty }}">
-  <input type="hidden" name="quiz_data_json" value='{{ quiz_data|safe|escapejs }}'>
+      {% for q in quiz_data %}
+        <div class="question" data-index="{{ forloop.counter0 }}">
+          <h3>Q{{ forloop.counter }}: {{ q.question }}</h3>
+          <div class="options">
+            {% for opt in q.options %}
+              <label>
+                <input
+                  type="radio"
+                  name="q{{ forloop.parentloop.counter0 }}"
+                  value="{{ forloop.counter0 }}" />
+                {{ opt }}
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
 
-  {% for q in quiz_data %}
-    <div style="margin-bottom: 25px;">
-      <strong>Q{{ forloop.counter }}:</strong> {{ q.question }}
-      <ul>
-        {% for opt in q.options %}
-          <li>{{ opt.text }} {% if opt.is_correct %}<span style="color: green;">✔</span>{% endif %}</li>
-        {% endfor %}
-      </ul>
-    </div>
-  {% endfor %}
+      <button type="submit" class="btn">Submit Quiz</button>
+    </form>
+  </div>
 
-  <button type="submit">✅ Save Quiz to Lesson</button>
-  <a href="{% url 'lesson_detail' lesson.course.id lesson.id %}">❌ Cancel</a>
-</form>
-
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Parse and attach JSON to hidden input for POST
+      try {
+        const quizData = JSON.parse(document.getElementById('quiz-data-json').textContent);
+        document.getElementById('hidden-json').value = JSON.stringify(quizData);
+      } catch (err) {
+        alert("Error loading quiz—please regenerate.");
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>

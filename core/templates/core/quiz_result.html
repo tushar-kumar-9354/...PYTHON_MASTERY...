@@ -1,6 +1,18 @@
+<h2>{{ lesson.title }} – Result</h2>
+<p>Difficulty: {{ difficulty|capfirst }}</p>
+<p>Score: {{ score }} / {{ total }}</p>
 
-<h2>Quiz: {{ quiz.title }}</h2>
-<p>✅ You scored {{ score }} out of {{ total }}</p>
-
-<a href="{% url 'course_list' %}">Back to Courses</a>
-
+<hr>
+{% for result in results %}
+  <div>
+    <strong>Q{{ forloop.counter }}: {{ result.question }}</strong><br>
+    Your Answer: {{ result.selected|default:"Not Answered" }}<br>
+    Correct Answer: {{ result.correct }}<br>
+    {% if result.is_correct %}
+      <span style="color:green;">✔ Correct</span>
+    {% else %}
+      <span style="color:red;">✘ Incorrect</span>
+    {% endif %}
+    <hr>
+  </div>
+{% endfor %}

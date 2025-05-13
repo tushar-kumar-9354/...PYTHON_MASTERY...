@@ -1,21 +1,43 @@
-<h2>Quiz Result - {{ quiz.title }}</h2>
-<p>You scored {{ score }} out of {{ total }}</p>
 
-{% for result in results %}
-    <div>
-        <strong>Q: {{ result.question.question_text }}</strong><br>
+{% block content %}
 
-        <span style="color: {% if result.selected_option == result.correct_option %}green{% else %}red{% endif %};">
-            Your Answer: {{ result.selected_option.option_text if result.selected_option else "Not Answered" }}
-        </span><br>
+<h2>Quiz Results</h2>
 
-        {% if result.selected_option != result.correct_option %}
-            <span style="color: green;">
-                Correct Answer: {{ result.correct_option.option_text }}
-            </span>
-        {% endif %}
-    </div>
-    <hr>
-{% endfor %}
+<table border="1" cellpadding="10">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Question</th>
+            <th>Selected Answer</th>
+            <th>Correct Answer</th>
+            
+        </tr>
+    </thead>
+    <tbody>
+        {% for result in quizzes %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ result.question.text }}</td>
+                <td>
+                    {% if result.selected_option %}
+                        {{ result.selected_option.option_text }}
+                    {% else %}
+                        Not Answered
+                    {% endif %}
+                </td>
+                <td>
+                    {% for option in result.question.options.all %}
+                        {% if option.is_correct %}
+                            {{ option.option_text }}
+                        {% endif %}
+                    {% endfor %}
+                </td>
+                <td>{{ result.question.explanation }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5">No quiz data available.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
 
-<a href="{% url 'course_list' %}">🔙 Back to Courses</a>
+{% endblock %}

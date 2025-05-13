@@ -80,7 +80,7 @@ WSGI_APPLICATION = 'pymastery.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'pymasterydb',
+        'NAME': 'PYMASTERYDB',
         'USER': 'postgres',
         'PASSWORD': '12345',
         'HOST': 'localhost',

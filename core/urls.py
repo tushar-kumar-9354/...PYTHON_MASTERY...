@@ -18,6 +18,8 @@ urlpatterns = [
     path('ai/explain/', views.get_gemini_explanation, name='ai_explain'),
     path('lesson/<int:lesson_id>/generate_quiz/', views.generate_ai_quiz, name='generate_ai_quiz'),
     path('lesson/<int:lesson_id>/save_ai_quiz/', views.save_ai_quiz, name='save_ai_quiz'),
-
+    path('lessons/<int:lesson_id>/quizzes/<int:quiz_id>/', views.take_quiz, name='take_quiz'),
+    path('quizzes/result/<int:attempt_id>/', views.quiz_result, name='quiz_result'),
     
+   
 ]

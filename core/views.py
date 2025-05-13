@@ -1,33 +1,45 @@
 import json
+import os
+import re
 import pygemini
+import requests
+from dotenv import load_dotenv
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login
+from django.contrib import messages
 from django.db.models import Avg, Count, Max, F, Window
 from django.db.models.functions import Rank
 from django.core.serializers.json import DjangoJSONEncoder
+from django.views.decorators.csrf import csrf_exempt
+
+import google.generativeai as genai
 
 from .models import (
-    Course, Lesson, Quiz, Question, Option, QuizResult
+    Course, Lesson, Quiz, Question, Option, QuizResult, UserAnswer ,QuizAttempt, Answer
 )
 from .forms import CourseForm
 
+# Load env variables
+load_dotenv()
+GEMINI_API_KEY ="AIzaSyDUKAYNttTpvyilioaF9BfbPDEmw6g2ljQ"
 
-# ✅ Home page view
+
+# ✅ Home page
 def home(request):
     return render(request, 'core/home.html')
 
 
-# ✅ Course list view
+# ✅ Course list
 def course_list(request):
     courses = Course.objects.all()
     return render(request, 'core/course_list.html', {'courses': courses})
 
 
-# ✅ Lesson list view for a course
+# ✅ Lesson list for a course
 def lesson_list(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
     lessons = course.lessons.all()
@@ -40,32 +52,75 @@ def lesson_detail(request, course_id, lesson_id):
     return render(request, 'core/lesson_detail.html', {'lesson': lesson})
 
 
-# ✅ Quiz list view for a lesson
+# ✅ Quiz list for a lesson (shows user's selected answers if available)
 def quiz_list(request, lesson_id):
-    lesson = get_object_or_404(Lesson, pk=lesson_id)
-    quizzes = lesson.quizzes.all()
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    questions = Question.objects.filter(quiz__lesson=lesson)
+    quizzes = []
+
+    for question in questions:
+        try:
+            user_answer = UserAnswer.objects.get(user=request.user, question=question)
+            selected_option = user_answer.selected_option
+        except UserAnswer.DoesNotExist:
+            selected_option = None
+
+        quizzes.append({'question': question, 'selected_option': selected_option})
+
     return render(request, 'core/quiz_list.html', {'lesson': lesson, 'quizzes': quizzes})
 
 
-# ✅ Take a quiz
+# ✅ Take a quiz (POST handles submission)
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Quiz, Option, Answer, QuizResult, UserAnswer
 @login_required
-def take_quiz(request, quiz_id):
-    quiz = get_object_or_404(Quiz, pk=quiz_id)
-    questions = quiz.questions.prefetch_related('options')
+def take_quiz(request, lesson_id, quiz_id):
+    quiz = get_object_or_404(Quiz, id=quiz_id, lesson_id=lesson_id)
+    questions = quiz.questions.prefetch_related('options').all()
 
     if request.method == 'POST':
         score = 0
         total = questions.count()
         results = []
 
+        # Create initial attempt
+        attempt = QuizResult.objects.create(
+            user=request.user,
+            quiz=quiz,
+            score=0,
+            total_questions=total
+        )
+
         for question in questions:
             selected_option_id = request.POST.get(f'question_{question.id}')
             selected_option = None
             correct_option = question.options.filter(is_correct=True).first()
+            is_correct = False
 
             if selected_option_id:
-                selected_option = Option.objects.get(pk=selected_option_id)
-                if selected_option.is_correct:
+                try:
+                    selected_option = Option.objects.get(pk=selected_option_id)
+                    is_correct = selected_option.is_correct
+                except Option.DoesNotExist:
+                    pass
+
+                # Save answer
+                Answer.objects.create(
+                    attempt=attempt,
+                    question=question,
+                    selected_option=selected_option,
+                    is_correct=is_correct
+                )
+
+                # Save/update user's latest answer
+                UserAnswer.objects.update_or_create(
+                    user=request.user,
+                    question=question,
+                    defaults={'selected_option': selected_option, 'is_correct': is_correct}
+                )
+
+                if is_correct:
                     score += 1
 
             results.append({
@@ -74,12 +129,14 @@ def take_quiz(request, quiz_id):
                 'correct_option': correct_option
             })
 
-        # Save quiz result
-        QuizResult.objects.create(
+        attempt.score = score
+        attempt.save()
+
+        # Update or create quiz result
+        QuizResult.objects.update_or_create(
             user=request.user,
             quiz=quiz,
-            score=score,
-            total_questions=total
+            defaults={'score': score, 'total_questions': total}
         )
 
         return render(request, 'core/quiz_result.html', {
@@ -89,13 +146,13 @@ def take_quiz(request, quiz_id):
             'results': results
         })
 
+    # GET request
     return render(request, 'core/take_quiz.html', {
         'quiz': quiz,
-        'questions': questions,
+        'questions': questions
     })
 
-
-# ✅ User Sign-up
+# ✅ Signup
 def signup_view(request):
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
@@ -108,23 +165,24 @@ def signup_view(request):
     return render(request, 'core/signup.html', {'form': form})
 
 
-# ✅ User Login
+# ✅ Login
 def custom_login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
-            user = form.get_user()
-            login(request, user)
+            login(request, form.get_user())
             return redirect('home')
     else:
         form = AuthenticationForm()
     return render(request, 'core/login.html', {'form': form})
 
 
-# ✅ My Quiz History with Analytics
+# ✅ My quiz history with analytics
 @login_required
 def my_quiz_history(request):
-    results = QuizResult.objects.filter(user=request.user).select_related('quiz').order_by('-taken_at')
+    results = QuizResult.objects.filter(user=request.user)\
+                .select_related('lesson')\
+                .order_by('-submitted_at')
 
     analytics = QuizResult.objects.filter(user=request.user).aggregate(
         avg_score=Avg('score'),
@@ -143,7 +201,7 @@ def my_quiz_history(request):
     })
 
 
-# ✅ Leaderboard with Ranking
+# ✅ Leaderboard with ranking
 def leaderboard(request):
     top_scores = (
         QuizResult.objects
@@ -235,114 +293,46 @@ def get_gemini_explanation(request):
             return JsonResponse({'error': f'AI error: {str(e)}'}, status=500)
 
     return HttpResponseBadRequest("Only POST requests are allowed.")
-import requests
-from django.shortcuts import get_object_or_404, redirect, render
-from django.contrib import messages
-from core.models import Lesson, Quiz, Question, Option
-from django.views.decorators.csrf import csrf_exempt
-import json
-# === Replace with your actual Gemini API key ===
-GEMINI_API_KEY = "AIzaSyDUKAYNttTpvyilioaF9BfbPDEmw6g2ljQ"
-
-def generate_prompt(title, content, difficulty, num_questions):
-    return f"""
-Generate {num_questions} multiple-choice questions for a Python tutorial.
-
-Lesson title: {title}
-Difficulty: {difficulty}
-Format: Return only JSON in this format:
-[
-  {{
-    "question": "string",
-    "options": [
-      {{ "text": "string", "is_correct": true/false }},
-      ...
-    ]
-  }}
-]
-
-Lesson content:
-{content}
-"""
 
 
-import json
-import requests
-from django.shortcuts import get_object_or_404, redirect, render
-from django.contrib import messages
-from django.views.decorators.csrf import csrf_exempt
-
-from core.models import Lesson, Quiz, Question, Option
-
-# === Your Gemini API key (make sure this is set in env or settings in prod) ===
-GEMINI_API_KEY = "AIzaSyDUKAYNttTpvyilioaF9BfbPDEmw6g2ljQ"
-from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib import messages
-import requests
-import json
-
-from core.models import Lesson
-
-GEMINI_API_KEY = "AIzaSyDUKAYNttTpvyilioaF9BfbPDEmw6g2ljQ"  # Replace with your actual key
-
-def generate_prompt(title, content, difficulty, num_questions):
-    return f"""
-Generate {num_questions} multiple-choice questions for a Python tutorial.
-
-Lesson title: {title}
-Difficulty: {difficulty}
-Format: Return only JSON in this format:
-[
-  {{
-    "question": "string",
-    "options": [
-      {{ "text": "string", "is_correct": true/false }},
-      ...
-    ]
-  }}
-]
-
-Lesson content:
-{content}
-"""
-
-
-
-
-### ✅ Full Code for `generate_ai_quiz` (with safe cleaning + preview)
+# Pull this from settings or env in production
 
 
 import json
 import re
 import requests
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
-from core.models import Lesson
+from .models import Lesson, Quiz, Question, Option
 
-# Replace with your actual Gemini API key
-GEMINI_API_KEY = "AIzaSyDUKAYNttTpvyilioaF9BfbPDEmw6g2ljQ"
+
+GEMINI_API_KEY = "AIzaSyDUKAYNttTpvyilioaF9BfbPDEmw6g2ljQ"  # make sure this is set in your settings
 
 def generate_prompt(title, content, difficulty, num_questions):
     return f"""
-Generate {num_questions} multiple-choice questions for a Python tutorial.
+You are an expert educational AI quiz generator.
 
-Lesson title: {title}
-Difficulty: {difficulty}
-Format: Return only JSON in this format:
-[
-  {{
-    "question": "string",
-    "options": [
-      {{ "text": "string", "is_correct": true/false }},
-      ...
-    ]
-  }}
-]
+Generate exactly {num_questions} multiple-choice questions for the lesson titled "{title}".
 
 Lesson content:
 {content}
+
+Instructions:
+- Difficulty: {difficulty} (easy/medium/hard)
+- Each question must have exactly 4 options.
+- Only one option is correct.
+- Return **only** valid JSON in this format:
+
+[
+  {{
+    "question": "Question text?",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correct_index": 2
+  }}
+]
+
+Do not wrap the JSON in markdown or code fences.
 """
 
 @csrf_exempt
@@ -356,81 +346,148 @@ def generate_ai_quiz(request, lesson_id):
         except ValueError:
             num_questions = 3
 
-        trimmed_content = lesson.content[:4000]
+        # Trim content to avoid hitting API-size limits
+        trimmed_content = lesson.content[:3000]
         prompt = generate_prompt(lesson.title, trimmed_content, difficulty, num_questions)
 
-        try:
-            response = requests.post(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
-                params={"key": GEMINI_API_KEY},
-                headers={"Content-Type": "application/json"},
-                json={"contents": [{"parts": [{"text": prompt}]}]}
-            )
+        # Call Gemini 2.0 Flash
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
+        r = requests.post(
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+            params={"key": GEMINI_API_KEY},
+            json=payload,
+            headers={"Content-Type": "application/json"},
+            timeout=30
+        )
+        result = r.json()
 
-            result = response.json()
-            print("🔍 Gemini Full Response:", json.dumps(result, indent=2))  # Debug
-
-            if "candidates" not in result or not result["candidates"]:
-                messages.error(request, "❌ Gemini returned no content.")
-                return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
-
-            output = result["candidates"][0]["content"]["parts"][0].get("text", "").strip()
-            if not output:
-                raise ValueError("Gemini response was empty.")
-
-            # ✅ Remove Markdown-style ```json block
-            output_cleaned = re.sub(r"^```(?:json)?\n?", "", output)
-            output_cleaned = re.sub(r"\n?```$", "", output_cleaned.strip())
-
-            quiz_data = json.loads(output_cleaned)
-
-            return render(request, "core/ai_quiz_preview.html", {
-                "lesson": lesson,
-                "quiz_data": quiz_data,
-                "difficulty": difficulty,
-                "num_questions": num_questions
-            })
-
-        except Exception as e:
-            print("❌ Failed to parse Gemini output:", e)
-            messages.error(request, "❌ AI returned invalid quiz format.")
+        if "candidates" not in result or not result["candidates"]:
+            messages.error(request, "AI returned no quiz data.")
             return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
 
-    return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
+        text = result["candidates"][0]["content"]["parts"][0].get("text", "").strip()
+        # Remove any accidental fences
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
+
+        try:
+            quiz_data = json.loads(text)
+        except Exception:
+            messages.error(request, "Failed to parse AI output.")
+            return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
 
 
-from core.models import Quiz, Question, Option
+# … inside generate_ai_quiz after quiz_data = json.loads(text) …
 
-@csrf_exempt
+        quiz_json = json.dumps(quiz_data)
+
+        return render(request, "core/ai_quiz_preview.html", {
+            "lesson": lesson,
+            "quiz_data": quiz_data,       # for rendering questions
+            "quiz_json": quiz_json,       # the valid JSON string
+            "difficulty": difficulty,
+            "num_questions": num_questions
+        })
+
+
+    # Dump back to JSON with proper double quotes
+   
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from core.models import Lesson, QuizResult
+import json
+
+@login_required
 def save_ai_quiz(request, lesson_id):
     if request.method == "POST":
         lesson = get_object_or_404(Lesson, id=lesson_id)
-        difficulty = request.POST.get("difficulty", "medium")
-        quiz_data_json = request.POST.get("quiz_data_json", "")
+        quiz_data_json = request.POST.get('quiz_data_json')
+        difficulty = request.POST.get('difficulty')
 
         try:
             quiz_data = json.loads(quiz_data_json)
-            quiz = Quiz.objects.create(
-                lesson=lesson,
-                title=f"{lesson.title} — AI {difficulty.capitalize()} Quiz",
-                description=f"Generated with AI"
+        except json.JSONDecodeError:
+            return render(request, "core/error.html", {"message": "Invalid quiz data."})
+
+        score = 0
+        total = len(quiz_data)
+        results = []
+
+        for i, q in enumerate(quiz_data):
+            selected_index = request.POST.get(f"q{i}")
+            correct_index = q.get("correct_index")
+
+            is_correct = str(selected_index) == str(correct_index)
+            if is_correct:
+                score += 1
+
+            results.append({
+                "question": q.get("question"),
+                "selected": q["options"][int(selected_index)] if selected_index is not None else None,
+                "correct": q["options"][correct_index],
+                "is_correct": is_correct
+            })
+
+        # Save QuizResult
+        QuizResult.objects.create(
+            user=request.user,
+            lesson=lesson,
+            difficulty=difficulty,
+            score=score,
+            total=total,
+        )
+
+        return render(request, "core/quiz_result.html", {
+            "score": score,
+            "total": total,
+            "results": results,
+            "lesson": lesson,
+            "difficulty": difficulty
+        })
+    else:
+        return redirect("dashboard")  # or your fallback page
+ 
+
+    if request.method == "POST":
+        lesson = get_object_or_404(Lesson, id=lesson_id)
+        difficulty = request.POST.get("difficulty", "medium")
+
+        try:
+            quiz_data = json.loads(request.POST.get("quiz_data_json", "[]"))
+        except json.JSONDecodeError:
+            messages.error(request, "Invalid quiz data.")
+            return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
+
+        # Create the Quiz
+        quiz = Quiz.objects.create(
+            lesson=lesson,
+            title=f"{lesson.title} — AI {difficulty.capitalize()} Quiz",
+            description="Auto-generated quiz"
+        )
+
+        # Create Questions & Options, supplying a non-null explanation
+        for item in quiz_data:
+            q = Question.objects.create(
+                quiz=quiz,
+                question_text=item["question"],
+                explanation=""                  # ← this fixes the NOT NULL error
             )
+            for idx, opt_text in enumerate(item["options"]):
+                Option.objects.create(
+                    question=q,
+                    option_text=opt_text,
+                    is_correct=(idx == item["correct_index"])
+                )
 
-            for q in quiz_data:
-                question = Question.objects.create(quiz=quiz, question_text=q["question"])
-                for opt in q["options"]:
-                    Option.objects.create(
-                        question=question,
-                        option_text=opt["text"],
-                        is_correct=opt["is_correct"]
-                    )
+        messages.success(request, "Quiz saved to database!")
+        return redirect("quiz_list", lesson_id=lesson.id)
 
-            messages.success(request, "✅ Quiz saved successfully.")
-            return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
-
-        except Exception as e:
-            print("❌ Failed to save quiz:", e)
-            messages.error(request, "❌ Failed to save quiz.")
-            return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
-
-    return redirect("course_list")
+    return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
+@login_required
+def quiz_result(request, attempt_id):
+    attempt = get_object_or_404(QuizAttempt, id=attempt_id, user=request.user)
+    answers = Answer.objects.filter(attempt=attempt)
+    return render(request, 'lessons/quiz_result.html', {
+        'attempt': attempt,
+        'answers': answers
+    })
