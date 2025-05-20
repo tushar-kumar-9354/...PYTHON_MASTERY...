@@ -42,9 +42,19 @@ def course_list(request):
 # ✅ Lesson list for a course
 def lesson_list(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
-    lessons = course.lessons.all()
-    return render(request, 'core/lesson_list.html', {'course': course, 'lessons': lessons})
+    search_query = request.GET.get('q', '').strip()  # Get search term if any
 
+    if search_query:
+        lessons = course.lessons.filter(title__icontains=search_query)
+    else:
+        lessons = course.lessons.all()
+
+    context = {
+        'course': course,
+        'lessons': lessons,
+        'search_query': search_query,
+    }
+    return render(request, 'core/lesson_list.html', context)
 
 # ✅ Lesson detail view
 def lesson_detail(request, course_id, lesson_id):
@@ -179,8 +189,8 @@ def custom_login_view(request):
 
 # ✅ My quiz history with analytics
 @login_required
+
 def my_quiz_history(request):
-    
     results = QuizResult.objects.filter(user=request.user)\
                 .select_related('lesson')\
                 .order_by('-submitted_at')
@@ -192,14 +202,25 @@ def my_quiz_history(request):
 
     chart_data = [
         {'quiz__title': r.lesson.title, 'score': r.score}
-
         for r in results
     ]
-    
+
+    # ✅ Create a JSON-serializable version of results
+    results_as_dict = [
+        {
+            'lesson': {'title': r.lesson.title},
+            'score': r.score,
+            'total': r.total,
+            'submitted_at': r.submitted_at.isoformat()
+        }
+        for r in results
+    ]
+
     return render(request, 'core/my_quiz_history.html', {
         'results': results,
         'analytics': analytics,
         'chart_data': json.dumps(chart_data, cls=DjangoJSONEncoder),
+        'results_json': json.dumps(results_as_dict, cls=DjangoJSONEncoder),  # ✅ Needed for CSV
     })
 
 
@@ -210,10 +231,11 @@ from django.db.models.functions import Rank
 def leaderboard(request):
     top_scores = (
         QuizResult.objects
-        .values('user__username', 'lesson__title')  # ✅ FIXED: 'quiz__title' → 'lesson__title'
+        .values('user__username', 'lesson__title')  
         .annotate(best_score=Max('score'))
         .annotate(rank=Window(expression=Rank(), order_by=F('best_score').desc()))
-        .order_by('rank')[:10]
+        .order_by('-best_score')[:20]
+        
     )
 
     user_rank = None
@@ -281,12 +303,30 @@ def get_gemini_explanation(request):
             model = genai.GenerativeModel('gemini-2.0-flash')
             
             # Generate explanation
-            prompt = f"""Explain this code in simple terms:
-                    1. What does it do?
-                    2. How does it work?
-                    3. Key functions/variables
+            prompt = f"""
+                    You are an AI Python Language Assistant integrated into an online course platform.
 
-                    Code:
+                    When a user types something like:
+                    - "Summarize the above lesson"
+                    - "Explain the above code"
+                    - "Give a simple explanation of this chapter"
+
+                    ...you should:
+                    1. Automatically refer to the **Python lesson content that appears just above the chat box** (assume you have access to it).
+                    2. Provide a **clear, beginner-friendly summary** of that content.
+                    3. Include:
+                    - ✅ What is this.
+                    - ✅ What the function or concept does.
+                    - ✅ How it works (step-by-step if needed).
+                    - ✅ Key functions/keywords used.
+                    4. If code is included:
+                    - 🧠 Break it down step-by-step.
+                    - 📌 Use headings, bullet points, and code blocks for clarity.
+
+                    Your goal is to make the lesson easy to understand like a Python tutor would.
+
+
+
 {code_snippet}"""
             response = model.generate_content(prompt)
             

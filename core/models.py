@@ -126,3 +126,10 @@ class Answer(models.Model):
 
     def __str__(self):
         return f"{self.attempt.user.username} - Q: {self.question.id} - {self.selected_option.option_text}"
+
+from django.shortcuts import render, get_object_or_404
+from .models import Lesson
+
+def lesson_detail(request, course_id, lesson_id):
+    lesson = get_object_or_404(Lesson, id=lesson_id, course_id=course_id)
+    return render(request, 'core/lesson_detail.html', {'lesson': lesson})

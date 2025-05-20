@@ -3,109 +3,587 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>{{ lesson.title }} | PyMastery</title>
-
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- HTMX -->
-  <script src="https://unpkg.com/htmx.org@1.9.5"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ lesson.title }} | PyMastery</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.5"></script>
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --primary: #1e3a8a; /* Deep blue for a professional look */
+            --secondary: #64748b; /* Elegant gray */
+            --accent: #facc15; /* Gold accent for subtle highlights */
+            --background: #f1f5f9; /* Light background */
+            --card-bg: #ffffff; /* Clean white card background */
+            --text-primary: #1e293b; /* Dark text */
+            --text-secondary: #64748b; /* Muted text */
+            --border-color: #e5e7eb; /* Light border */
+        }
+        body {
+            background: var(--background);
+            min-height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        body.dark-mode {
+            background: #1e293b;
+            color: #e2e8f0;
+        }
+        body.dark-mode .card,
+        body.dark-mode .sidebar {
+            background: #2d3748;
+            color: #e2e8f0;
+        }
+        body.dark-mode .prose,
+        body.dark-mode #ai-result,
+        body.dark-mode .sidebar a {
+            color: #e2e8f0;
+        }
+        body.dark-mode .prose code,
+        body.dark-mode .prose pre,
+        body.dark-mode #ai-result,
+        body.dark-mode .quiz-form {
+            background: #374151;
+            color: #e2e8f0;
+        }
+        body.dark-mode .ai-form input,
+        body.dark-mode .quiz-form select,
+        body.dark-mode .quiz-form input {
+            background: #374151;
+            color: #e2e8f0;
+            border-color: #4b5563;
+        }
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--primary);
+            z-index: 2000;
+            transition: width 0.3s ease;
+        }
+        header {
+            background: var(--card-bg);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 1.25rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        header a, header span {
+            color: var(--primary);
+            transition: color 0.3s ease;
+        }
+        header a:hover {
+            color: #3b82f6;
+        }
+        
+        
+        main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            display: flex;
+            gap: 2rem;
+        }
+        .content-wrapper {
+            flex: 1;
+        }
+        .sidebar {
+            width: 250px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            position: sticky;
+            top: 6rem;
+            height: fit-content;
+            border: 1px solid var(--border-color);
+        }
+        .sidebar h5 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+        .sidebar li {
+            margin-bottom: 0.75rem;
+        }
+        .sidebar a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 400;
+            transition: color 0.3s ease, background 0.3s ease;
+            display: block;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+        }
+        .sidebar a:hover {
+            color: var(--primary);
+            background: #f1f5f9;
+        }
+        .sidebar-toggle {
+            display: none;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+        .card {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--card-bg);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        h1 {
+            font-weight: 700;
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+        .prose {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            line-height: 1.8;
+            transition: color 0.5s ease;
+        }
+        .prose h2, .prose h3, .prose h4 {
+            color: var(--primary);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        .prose p {
+            margin-bottom: 1.25rem;
+        }
+        .prose code {
+            background: #e5e7eb;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+        }
+        .prose pre {
+            background: #e5e7eb;
+            padding: 1.25rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.95rem;
+        }
+        .ai-form input {
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+        }
+        .ai-form input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+        }
+        .ai-form button,
+        .quiz-form button {
+            background: var(--primary);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            width: 150px;
+            text-align: center;
+        }
+        .ai-form button:hover,
+        .quiz-form button:hover {
+            background: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(29, 78, 216, 0.2);
+        }
+        #ai-result {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+            position: relative;
+            transition: color 0.5s ease;
+        }
+        #ai-result pre {
+            background: #e5e7eb;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+        .copy-btn:hover {
+            background: #3b82f6;
+        }
+        .quiz-form {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .quiz-form label {
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-right: 0.5rem;
+        }
+        .quiz-form select, .quiz-form input {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+        .quiz-form select:focus, .quiz-form input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+        }
+        .scroll-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .scroll-to-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .scroll-to-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--card-bg);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.8s ease forwards;
+        }
+        .slide-in {
+            animation: slideIn 0.8s ease forwards;
+        }
+        @media (max-width: 768px) {
+            main {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                position: static;
+                margin-bottom: 1.5rem;
+                max-height: 0;
+                overflow: hidden;
+                padding: 0;
+                transition: max-height 0.5s ease, padding 0.5s ease;
+            }
+            .sidebar.open {
+                max-height: 500px;
+                padding: 1.5rem;
+            }
+            .sidebar-toggle {
+                display: block;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .quiz-form {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .quiz-form div {
+                width: 100%;
+            }
+            .ai-form input {
+                max-width: 100%;
+            }
+        }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen font-sans">
+<body>
 
-  <!-- Header -->
-  <header class="bg-white shadow mb-8">
-    <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
-      <a href="{% url 'home' %}" class="text-2xl font-bold text-blue-700">PyMastery</a>
-      <div class="space-x-4">
-        {% if user.is_authenticated %}
-          <span class="text-sm text-gray-600">Hi, {{ user.username }}</span>
-          <a href="{% url 'logout' %}" class="text-blue-600 hover:underline">Logout</a>
-        {% else %}
-          <a href="{% url 'login' %}" class="text-blue-600 hover:underline">Login</a>
-          <a href="{% url 'signup' %}" class="text-blue-600 hover:underline">Sign Up</a>
-        {% endif %}
-      </div>
+    <style>
+        .navbar {
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .navbar-brand:hover, .nav-link:hover {
+            color: #3b82f6 !important;
+            transform: scale(1.05);
+            transition: all 0.2s ease;
+        }
+        .dropdown-menu {
+            animation: fadeIn 0.3s ease-in-out;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .btn-custom {
+            background: linear-gradient(to right, #3b82f6, #60a5fa);
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            background: linear-gradient(to right, #2563eb, #3b82f6);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .search-bar {
+            transition: all 0.3s ease;
+        }
+        .search-bar:focus {
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Enhanced Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
+        <div class="container mx-auto px-4">
+            <a class="navbar-brand font-bold text-2xl text-gray-800" href="{% url 'home' %}">Course Platform</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                   
+                    <li class="nav-item">
+                        <a class="nav-link text-gray-600 px-3" href="{% url 'course_list' %}">Courses</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-gray-600 px-3" href="{% url 'leaderboard' %}">Leaderboard</a>
+                    </li>
+                    
+                   
+                </ul>
+                <!-- Search Bar (linked to lesson_list search) -->
+                <form class="d-flex mx-3" action="{% url 'lesson_list' course_id=1 %}" method="get">
+                    <input class="form-control search-bar border-gray-300 rounded-lg" type="search" name="q" placeholder="Search lessons..." aria-label="Search" value="{{ search_query|default:'' }}">
+                    <button class="btn btn-custom ms-2" type="submit">Search</button>
+                </form>
+                <!-- User Actions -->
+                <ul class="navbar-nav ms-auto">
+                   
+            {% if user.is_authenticated %}
+                <li class="nav-item ms-3 d-flex align-items-center">
+                    <span class="fw-semibold text-primary me-3">
+                        <i class="bi bi-person-circle me-1"></i> {{ user.username }}
+                    </span>
+                </li>
+                <li class="nav-item me-2">
+                    <a class="nav-link btn btn-outline-primary px-3 py-1 rounded-pill" href="{% url 'my_quiz_history' %}">
+                        <i class="bi bi-clock-history me-1"></i> My Quiz History
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <form method="post" action="{% url 'logout' %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="nav-link btn px-3 py-1 rounded-pill text-white ms-2" style="background: #000; color: #fff !important; border: none;">
+                            <i class="bi"></i> Logout
+                        </button>
+                    </form>
+                </li>
+            {% else %}
+                <li class="nav-item me-2">
+                    <a class="nav-link btn px-3 py-1 rounded-pill text-white" style="background: #000; color: #fff !important;" href="{% url 'login' %}">
+                        Login
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'signup' %}">Sign Up</a>
+                </li>
+            {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+        {% block content %}
+        {% endblock %}
     </div>
-  </header>
 
-  <!-- Main Content -->
-  <main class="max-w-5xl mx-auto px-4 py-6">
-    <h1 class="text-3xl font-bold mb-4">{{ lesson.title }}</h1>
+    <!-- Bootstrap 5 JS and Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
 
-    <div class="prose max-w-none">
-      {{ lesson.content|safe }}
-    </div>
+    <!-- Main Content -->
+    <main>
+        <!-- Sidebar -->
+        <aside class="sidebar slide-in">
+            <button class="sidebar-toggle">☰ Navigation</button>
+            <h5>Quick Navigation</h5>
+            <ul>
+                <li><a href="#lesson-content">Lesson Content</a></li>
+                <li><a href="#ai-explainer">AI Code Explainer</a></li>
+                <li><a href="#generate-quiz">Generate Quiz</a></li>
+                {% if course and course.id %}
+                    <li><a href="{% url 'lesson_list' course.id %}">Back to Lessons</a></li>
+                {% else %}
+                    <li><a href="{% url 'course_list' %}">Back to Courses</a></li>
+                {% endif %}
+            </ul>
+        </aside>
 
-    <hr class="my-10">
+        <!-- Content -->
+        <div class="content-wrapper">
+            <div class="card fade-in" id="lesson-content">
+                <h1>{{ lesson.title }}</h1>
 
-    <!-- 🤖 Gemini AI Code Explainer -->
-    <!-- 🤖 Gemini AI Code Explainer Section -->
-<h2 class="text-xl font-semibold mb-2">🤖 Need Help Understanding This Code?</h2>
+                <div class="prose max-w-none">
+                    {{ lesson.content|safe }}
+                </div>
+            </div>
 
-<form
-  id="ai-form"
-  hx-post="{% url 'ai_explain' %}"
-  hx-target="#ai-result"
-  hx-swap="innerHTML"
-  class="space-y-4"
->
-  {% csrf_token %}
-  <textarea 
-    name="code_snippet" 
-    rows="6" 
-    class="w-full p-3 border rounded shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-    placeholder="Paste your Python code here..."
-  ></textarea>
-  <button 
-    type="submit" 
-    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-    hx-indicator="#loading-spinner"
-  >
-    <span id="button-text">Ask Gemini AI</span>
-    <span id="loading-spinner" class="htmx-indicator ml-2">
-      <svg class="animate-spin h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-    </span>
-  </button>
-</form>
+            <!-- AI Code Explainer -->
+            <div class="card fade-in" id="ai-explainer">
+                <h2 class="text-xl font-semibold mb-2 text-primary">🤖 AI Code Explainer</h2>
+                <h3 class="text-lg font-medium mb-4 text-gray-600">Paste code from the lesson and ask anything...</h3>
 
-<!-- Response Container -->
-<div id="ai-result" class="mt-6">
-  <!-- Response will appear here with the styling below -->
-  <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 whitespace-pre-wrap font-mono text-sm"></div>
-</div>
-<hr>
-<hr>
-<h4>🧠 Generate AI Quiz</h4>
-<form method="POST" action="{% url 'generate_ai_quiz' lesson.id %}">
-  {% csrf_token %}
-  <label>Difficulty:</label>
-  <select name="difficulty">
-    <option value="easy">Easy</option>
-    <option value="medium" selected>Medium</option>
-    <option value="hard">Hard</option>
-    <option value="mixed">Mixed</option>
-  </select>
+                <form
+                    id="ai-form"
+                    hx-post="{% url 'ai_explain' %}"
+                    hx-target="#ai-result"
+                    hx-swap="innerHTML"
+                    class="ai-form space-y-4"
+                >
+                    {% csrf_token %}
+                    <input 
+                        type="text"
+                        name="code_snippet" 
+                        class="w-full p-3"
+                        placeholder="Paste your Python code here..."
+                    />
+                    <button 
+                        type="submit" 
+                        class="btn text-white"
+                        hx-indicator="#loading-spinner"
+                        data-bs-toggle="tooltip"
+                        title="Get an explanation from AI"
+                    >
+                        <span id="button-text"><i class="bi bi-robot me-2"></i> Ask AI</span>
+                        <span id="loading-spinner" class="htmx-indicator ml-2">
+                            <svg class="animate-spin h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </form>
 
-  <label>Number of Questions:</label>
-  <input type="number" name="num_questions" value="3" min="1" max="10">
+                <!-- Response Container -->
+                <div id="ai-result" class="mt-6">
+                    <div class="whitespace-pre-wrap font-mono text-sm"></div>
+                </div>
+            </div>
 
-  <button type="submit">🚀 Generate Quiz</button>
-</form>
+            <!-- Generate AI Quiz -->
+            <div class="card fade-in" id="generate-quiz">
+                <h4 class="text-lg font-semibold mb-4 text-primary">🧠 Generate AI Quiz</h4>
+                <form method="POST" action="{% url 'generate_ai_quiz' lesson.id %}" class="quiz-form d-flex align-items-center gap-3 flex-wrap">
+                    {% csrf_token %}
+                    <div>
+                        <label class="me-2"><i class="bi bi-bar-chart-fill me-1"></i> Difficulty:</label>
+                        <select name="difficulty">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                            <option value="mixed">Mixed</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="me-2"><i class="bi bi-123 me-1"></i> Number of Questions:</label>
+                        <input type="number" name="num_questions" value="3" min="1" max="10">
+                    </div>
+                    <button type="submit" class="btn text-white" data-bs-toggle="tooltip" title="Generate a quiz for this lesson">
+                        <i class="bi bi-rocket-takeoff me-2"></i> Generate Quiz
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
 
+    <!-- Scroll to Top Button -->
+    <button class="scroll-to-top" data-bs-toggle="tooltip" title="Scroll to Top">
+        <i class="bi bi-arrow-up"></i>
+    </button>
 
-  </main>
+    <!-- Footer -->
+    <footer>
+        © {% now "Y" %} PyMastery. Crafted with ❤️ by Tushar.
+    </footer>
 
-  <!-- Footer -->
-  <footer class="bg-white mt-12 py-4 text-center text-sm text-gray-500">
-    &copy; {% now "Y" %} PyMastery. Built with ❤️ by Tushar.
-  </footer>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize tooltips
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
 </body>
 </html>

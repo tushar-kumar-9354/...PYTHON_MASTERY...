@@ -1,106 +1,333 @@
-<!-- Section Heading -->
-<h2 class="text-2xl font-semibold mb-4">📘 My Quiz Dashboard</h2>
+{% load static %}
 
-<p class="mb-2"><strong>Total Quizzes Taken:</strong> {{ analytics.total_quizzes }}</p>
-<p class="mb-6"><strong>Average Score:</strong> {{ analytics.avg_score|floatformat:2 }}</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Quiz Dashboard | PyMastery</title>
 
-<hr class="my-6">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<h3 class="text-xl font-semibold mb-4">📊 Performance Charts</h3>
-
-<!-- Chart Containers styled to match table width -->
-<div class="w-full max-w-3xl mx-auto">
-  <canvas id="scoreBarChart" class="w-full h-64"></canvas>
-</div>
-
-<div class="w-full max-w-3xl mx-auto mt-8">
-  <canvas id="scorePieChart" class="w-full h-64"></canvas>
-</div>
-
-<!-- Chart.js Script -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-  const chartData = {{ chart_data|safe }};
-  const labels = chartData.map(item => item.quiz__title);
-  const data = chartData.map(item => item.score);
-
-  const barCtx = document.getElementById('scoreBarChart').getContext('2d');
-  new Chart(barCtx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Quiz Scores',
-        data: data,
-        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 10
-        }
-      },
-      plugins: {
-        legend: {
-          display: false
-        }
-      }
+  <!-- Custom Styles -->
+  <style>
+    body {
+      background: linear-gradient(135deg, #e0f2fe 0%, #f8fafc 100%);
+      min-height: 100vh;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      flex-direction: column;
     }
-  });
+    .container {
+      flex: 1;
+    }
+    .card {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    .chart-container {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    .table th, .table td {
+      vertical-align: middle;
+    }
+    .table tbody tr:hover {
+      background-color: #f1f5f9;
+      transition: background-color 0.3s ease;
+    }
+    .btn-download {
+      background-color: #28a745;
+      color: white;
+      transition: background-color 0.3s ease;
+    }
+    .btn-download:hover {
+      background-color: #218838;
+    }
+    footer {
+      margin-top: auto;
+      background: #ffffff;
+      padding: 1rem 0;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      animation: fadeIn 0.8s ease forwards;
+    }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="{% url 'home' %}">PyMastery 🐍</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" 
+              aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-  const pieCtx = document.getElementById('scorePieChart').getContext('2d');
-  new Chart(pieCtx, {
-    type: 'pie',
-    data: {
-      labels: labels,
-      datasets: [{
-        data: data,
-        backgroundColor: [
-          '#ff6384', '#36a2eb', '#cc65fe', '#ffce56',
-          '#4bc0c0', '#9966ff', '#ff9f40'
-        ]
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
+          <li class="nav-item me-3">
+            <a class="btn btn-outline-primary" href="{% url 'course_list' %}">📚 Start Learning</a>
+          </li>
+          <li class="nav-item me-3">
+            <a class="btn btn-outline-success" href="{% url 'leaderboard' %}">📝 Leaderboard</a>
+          </li>
+         
+            {% if user.is_authenticated %}
+            <li class="nav-item dropdown ms-3">
+              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              👤 {{ user.username }}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+              <li>
+                <form method="post" action="{% url 'logout' %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="dropdown-item text-danger">Logout</button>
+                </form>
+              </li>
+              </ul>
+            </li>
+           
+              
+            </li>
+          {% else %}
+            <li class="nav-item me-2"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'signup' %}">Sign Up</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+<main class="container my-5">
+  <div class="card p-4 fade-in">
+    <h2 class="text-center text-primary mb-4">📘 My Quiz Dashboard</h2>
+
+    <div class="row text-center mb-4">
+      <div class="col-md-6">
+        <p class="mb-2"><strong>Total Quizzes Taken:</strong> <span class="badge bg-primary">{{ analytics.total_quizzes }}</span></p>
+      </div>
+      <div class="col-md-6">
+        <p class="mb-2"><strong>Average Score:</strong> <span class="badge bg-success">{{ analytics.avg_score|floatformat:2 }}</span></p>
+      </div>
+    </div>
+
+    <hr class="my-4">
+
+    <!-- Charts Section -->
+    <h3 class="text-center text-primary mb-4">📊 Performance Charts</h3>
+
+    <!-- Bar Chart -->
+    <div class="chart-container mb-5" style="height: 300px;">
+      <canvas id="scoreBarChart"></canvas>
+    </div>
+
+    <!-- Pie Chart -->
+    <div class="chart-container" style="height: 300px;">
+      <canvas id="scorePieChart"></canvas>
+    </div>
+
+    <!-- Chart.js Script -->
+    <script>
+      const chartData = {{ chart_data|safe }};
+      const labels = chartData.map(item => item.quiz__title);
+      const data = chartData.map(item => item.score);
+
+      // Bar Chart
+      const barCtx = document.getElementById('scoreBarChart').getContext('2d');
+      new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Quiz Scores',
+            data: data,
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: {
+            duration: 1500,
+            easing: 'easeOutQuart'
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 10,
+              ticks: {
+                stepSize: 1
+              },
+              title: {
+                display: true,
+                text: 'Score',
+                font: { size: 14 }
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Quiz',
+                font: { size: 14 }
+              }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#333',
+              titleFont: { size: 14 },
+              bodyFont: { size: 12 },
+              cornerRadius: 5
+            }
+          }
+        }
+      });
+
+      // Pie Chart
+      const pieCtx = document.getElementById('scorePieChart').getContext('2d');
+      new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: [
+              '#ff6384', '#36a2eb', '#cc65fe', '#ffce56',
+              '#4bc0c0', '#9966ff', '#ff9f40', '#ff6b6b',
+              '#48cae4', '#00b4d8', '#90e0ef', '#0077b6'
+            ],
+            borderColor: '#fff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: {
+            duration: 1500,
+            easing: 'easeOutQuart'
+          },
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                boxWidth: 20,
+                padding: 15,
+                font: { size: 12 }
+              }
+            },
+            tooltip: {
+              backgroundColor: '#333',
+              titleFont: { size: 14 },
+              bodyFont: { size: 12 },
+              cornerRadius: 5
+            }
+          }
+        }
+      });
+    </script>
+
+    <!-- Quiz Results Table -->
+    <h3 class="text-center text-primary mt-5 mb-4">📝 Quiz Attempts</h3>
+    <div class="overflow-x-auto">
+      <table class="table table-hover align-middle text-center">
+        <thead class="table-primary">
+          <tr>
+            <th>Quiz</th>
+            <th>Score</th>
+            <th>Total</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for result in results %}
+          <tr data-bs-toggle="tooltip" title="Score: {{ result.score }}/{{ result.total }}">
+            <td>{{ result.lesson.title }}</td>
+            <td>{{ result.score }}</td>
+            <td>{{ result.total }}</td>
+            <td>{{ result.submitted_at|date:"Y-m-d H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="p-4 text-center text-muted">No quiz attempts found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Download Button -->
+    <div class="text-center mt-4">
+      <button class="btn btn-download px-4" id="downloadBtn">
+        <i class="bi bi-download me-2"></i> Download as CSV
+      </button>
+    </div>
+
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="text-center py-4">
+  <p class="mb-0 text-muted">© {% now "Y" %} PyMastery. Crafted with ❤️ by Tushar.</p>
+</footer>
+
+<!-- Bootstrap JS and Tooltip Init -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+  [...tooltipTriggerList].forEach(el => new bootstrap.Tooltip(el));
+</script>
+
+<!-- CSV Download Script -->
+<script>
+  document.getElementById('downloadBtn')?.addEventListener('click', function () {
+    try {
+      const results = JSON.parse('{{ results_json|escapejs }}');
+      const headers = ['Quiz', 'Score', 'Total', 'Date'];
+      const rows = results.map(result => {
+        const title = result.lesson?.title || 'Untitled';
+        const score = result.score ?? 0;
+        const total = result.total ?? 0;
+        const date = new Date(result.submitted_at).toLocaleString();
+        return [`"${title.replace(/"/g, '""')}"`, score, total, `"${date}"`];
+      });
+      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'quiz_attempts.csv';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+      }, 100);
+    } catch (err) {
+      alert('Failed to generate CSV file.');
+      console.error(err);
     }
   });
 </script>
 
-<!-- Table for Quiz Results -->
-<h3 class="text-xl font-semibold mt-12 mb-4">📝 Quiz Attempts</h3>
-<div class="overflow-x-auto">
-  <table class="w-full max-w-3xl mx-auto table-auto border border-gray-300 shadow">
-    <thead class="bg-gray-100">
-      <tr class="text-left">
-        <th class="p-2 border">Quiz</th>
-        <th class="p-2 border">Score</th>
-        <th class="p-2 border">Total</th>
-        <th class="p-2 border">Date</th>
-      </tr>
-    </thead>
-    <tbody>
-  {% for result in results %}
-    <tr class="border-t">
-      <td class="p-2 border">{{ result.lesson.title }}</td>  <!-- ✅ From QuizResult -->
-      <td class="p-2 border">{{ result.score }}</td>          <!-- ✅ From QuizResult -->
-      <td class="p-2 border">{{ result.total }}</td>          <!-- ✅ Correct field name -->
-      <td class="p-2 border">{{ result.submitted_at|date:"Y-m-d H:i" }}</td>  <!-- ✅ Correct -->
-    </tr>
-  {% empty %}
-    <tr>
-      <td colspan="4" class="p-4 text-center text-gray-500">No quiz attempts found.</td>
-    </tr>
-  {% endfor %}
-</tbody>
-
-  </table>
-</div>
+</body>
+</html>

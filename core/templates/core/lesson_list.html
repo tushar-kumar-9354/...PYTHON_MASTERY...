@@ -1,16 +1,242 @@
+{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Lessons in {{ course.title }} | PyMastery</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
+    <!-- Custom Styles -->
+    <style>
+        body {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 3rem auto 5rem auto;
+            padding: 0 1.5rem;
+        }
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+            padding: 2.5rem;
+        }
+        h1 {
+            font-weight: 700;
+            font-size: 2.8rem;
+            color: #1e40af;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        h1 span {
+            color: #4b5563;
+        }
+        .search-container {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto 3rem auto;
+        }
+        .search-container input {
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            border-radius: 50px;
+            border: 1px solid #d1d5db;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            width: 100%;
+        }
+        .search-container input:focus {
+            border-color: #1e40af;
+            box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.15);
+            outline: none;
+        }
+        .search-container i {
+            position: absolute;
+            top: 50%;
+            left: 1rem;
+            transform: translateY(-50%);
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+        .lesson-card {
+            background: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border-left: 5px solid;
+        }
+        .lesson-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        .lesson-card a {
+            color: #1e40af;
+            font-weight: 600;
+            font-size: 1.3rem;
+            text-decoration: none;
+        }
+        .lesson-card a:hover {
+            color: #1e3a8a;
+            text-decoration: underline;
+        }
+        /* Varied styles for lesson cards */
+        .lesson-card:nth-child(4n+1) {
+            border-left-color: #1e40af;
+            background: linear-gradient(145deg, #ffffff, #e0f2fe);
+        }
+        .lesson-card:nth-child(4n+2) {
+            border-left-color: #16a34a;
+            background: linear-gradient(145deg, #ffffff, #dcfce7);
+        }
+        .lesson-card:nth-child(4n+3) {
+            border-left-color: #d97706;
+            background: linear-gradient(145deg, #ffffff, #fef3c7);
+        }
+        .lesson-card:nth-child(4n) {
+            border-left-color: #7c3aed;
+            background: linear-gradient(145deg, #ffffff, #ede9fe);
+        }
+        .progress-circle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 50px;
+            height: 50px;
+        }
+        .progress-circle svg {
+            transform: rotate(-90deg);
+        }
+        .progress-circle .circle-bg {
+            fill: none;
+            stroke: #e5e7eb;
+            stroke-width: 6;
+        }
+        .progress-circle .circle-progress {
+            fill: none;
+            stroke: #16a34a;
+            stroke-width: 6;
+            stroke-linecap: round;
+            transition: stroke-dasharray 1s ease;
+        }
+        .progress-circle .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #16a34a;
+        }
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            background: #ffffff;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            color: #4b5563;
+            font-size: 0.9rem;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.8s ease forwards;
+        }
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            .lesson-card {
+                padding: 1rem;
+            }
+            .lesson-card a {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Lessons for: {{ course.title }}</h1>
-    <ul>
-        {% for lesson in lessons %}
-            <li>{{ lesson.title }}</li>
-        {% endfor %}
-    </ul>
+    <!-- Main Content -->
+    <main>
+        <div class="card fade-in">
+            <!-- Header -->
+            <header>
+                <h1>📚 Lessons for: <span>{{ course.title }}</span></h1>
+            </header>
+
+            <!-- Search Bar -->
+            <form method="get" class="mb-5">
+                <div class="search-container">
+                    <i class="bi bi-search"></i>
+                    <input 
+                        type="text" 
+                        name="q" 
+                        placeholder="Search lessons..." 
+                        value="{{ search_query }}" 
+                        class="form-control"
+                    >
+                </div>
+            </form>
+
+            <!-- Lesson Grid -->
+            {% if lessons %}
+                <div class="container text-center">
+                    <div class="row g-4">
+                        {% for lesson in lessons %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="lesson-card fade-in" data-bs-toggle="tooltip" title="View {{ lesson.title }}">
+                                    <a href="{% url 'lesson_detail' course.id lesson.id %}">{{ lesson.title }}</a>
+                                    {% if lesson.progress is not None %}
+                                        <div class="progress-circle" data-progress="{{ lesson.progress }}">
+                                            <svg width="50" height="50">
+                                                <circle class="circle-bg" cx="25" cy="25" r="20" />
+                                                <circle class="circle-progress" cx="25" cy="25" r="20" stroke-dasharray="0 125.6" stroke-dashoffset="0" />
+                                            </svg>
+                                            <div class="progress-text">{{ lesson.progress }}%</div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <p class="text-center text-muted mt-6 fade-in">No lessons found.</p>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        © {% now "Y" %} PyMastery. Crafted with ❤️ by Tushar.
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Confetti JS -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        // Initialize tooltips
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+        
+    </script>
 </body>
 </html>

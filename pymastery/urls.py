@@ -1,10 +1,10 @@
 from django.contrib import admin
-from django.urls import path, include  # include lets us modularize
+from django.urls import path, include  
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('core.urls')),  # 👈 all homepage routes in 'core'
-    path('accounts/', include('django.contrib.auth.urls')),  # 👈 Add this
+    path('', include('core.urls')),  
+    path('accounts/', include('django.contrib.auth.urls')),  
     
 
 ]

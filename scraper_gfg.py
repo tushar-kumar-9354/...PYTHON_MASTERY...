@@ -21,7 +21,7 @@ chrome_options.add_argument("--start-maximized")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--ignore-certificate-errors")
-
+ 
 service = Service(r"C:\Users\Hp\PYMASTERY\example\chromedriver.exe")
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
