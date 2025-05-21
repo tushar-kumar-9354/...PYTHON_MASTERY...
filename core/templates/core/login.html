@@ -56,7 +56,8 @@
       {% csrf_token %}
       <div class="form-group">
         <label for="username">Username</label>
-        <input type="text" id="username" name="username" value="{{ form.username.value }}" required>
+<input type="text" id="username" name="username" value="{{ form.username.value|default_if_none:'' }}" required>
+
         {% if form.username.errors %}
           <p style="color: red;">{{ form.username.errors }}</p>
         {% endif %}
@@ -75,6 +76,12 @@
       </div>
     </form>
     <p>Don't have an account? <a href="{% url 'signup' %}">Sign up</a></p>
+  <footer class="text-center py-4">
+    <p class="mb-0 text-muted">
+      © {% now "Y" %} PyMastery. Crafted with <i class="bi bi-heart-fill text-danger"></i> by 
+      <a href="https://github.com/tushar-kumar-9354" target="_blank" rel="noopener" class="text-decoration-none text-primary">Tushar</a>.
+    </p>
+  </footer>
   </div>
 
 </body>

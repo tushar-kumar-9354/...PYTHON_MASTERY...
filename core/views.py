@@ -169,7 +169,7 @@ def signup_view(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('course_list')
+            return redirect('home')
     else:
         form = UserCreationForm()
     return render(request, 'core/signup.html', {'form': form})
@@ -292,7 +292,7 @@ def get_gemini_explanation(request):
             if not code_snippet:
                 return JsonResponse({'error': 'No code provided.'}, status=400)
 
-            gemini_api_key = "AIzaSyDUKAYNttTpvyilioaF9BfbPDEmw6g2ljQ"
+            gemini_api_key = "own api key"
             if not gemini_api_key:
                 return JsonResponse({'error': 'Gemini API key not configured.'}, status=500)
 

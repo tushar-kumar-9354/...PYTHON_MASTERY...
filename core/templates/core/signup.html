@@ -1,9 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up</title>
+    <style>
+        body {
+            background-color: #f9fafb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
 
-<h2>Sign Up</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Register</button>
-</form>
+        .form-container {
+            background: white;
+            padding: 2.5rem 2rem;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 400px;
+        }
 
-<p>Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+        .form-container h2 {
+            text-align: center;
+            color: #111827;
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        form p {
+            margin-bottom: 1rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+            margin-top: 0.3rem;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #2563eb;
+            color: white;
+            font-size: 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.95rem;
+            color: #4b5563;
+        }
+
+        .form-footer a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Sign Up</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Register</button>
+        </form>
+        <div class="form-footer">
+            Already have an account? <a href="{% url 'login' %}">Log in</a>
+        </div>
+    <footer class="text-center py-4">
+    <p class="mb-0 text-muted">
+      © {% now "Y" %} PyMastery. Crafted with <i class="bi bi-heart-fill text-danger"></i> by 
+      <a href="https://github.com/tushar-kumar-9354" target="_blank" rel="noopener" class="text-decoration-none text-primary">Tushar</a>.
+    </p>
+  </footer>
+    </div>
+</body>
+</html>
