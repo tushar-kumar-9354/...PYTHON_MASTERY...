@@ -14,4 +14,4 @@ waitress==3.0.0
 whitenoise==6.1.0
 python-decouple==3.8
 google-generativeai==0.3.0
-pip install psycopg2-binary
+psycopg2-binary
