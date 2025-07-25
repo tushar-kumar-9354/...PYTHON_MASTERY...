@@ -85,9 +85,9 @@ class QuizAttempt(models.Model):
         return f"{self.user.username} - {self.quiz.title} (Score: {self.score}/{self.total_questions})"
 
 
-# -----------------------------
+# ------------------------------
 # Model: QuizResult (lesson level summary)
-# -----------------------------
+# ------------------------------
 class QuizResult(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
