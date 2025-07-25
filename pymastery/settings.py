@@ -80,14 +80,17 @@ WSGI_APPLICATION = 'pymastery.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-import dj_database_url
-
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv("DATABASE_URL", "postgres://postgres:12345@localhost:5432/PYMASTERYDB"),
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'pymasterydb',
+        'USER': 'pymasteruser',
+        'PASSWORD': 'Cb5nW78nYv46YtXrSmCV89yjhfpAc5iu',
+        'HOST': 'dpg-d21lstnfte5s73fpb6a0-a.oregon-postgres.render.com',
+        'PORT': '5432',
+    }
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
