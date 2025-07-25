@@ -25,9 +25,11 @@ SECRET_KEY = 'django-insecure-2h605qwija$#ggixpmp(ob9=@*h+^8d(q&7aw9dyo+0cj3se+d
 # SECURITY WARNING: don't run with debug turned on in production!
 
 DEBUG = os.environ.get("DEBUG", "False") == "True"
-ALLOWED_HOSTS = ['localhost', '127.0.0.1','pymastery.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1','python-mastery.onrender.com']
 
-
+CSRF_TRUSTED_ORIGINS = [
+    'https://python-mastery.onrender.com',
+]
 # Application definition
 
 INSTALLED_APPS = [
