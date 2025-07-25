@@ -81,7 +81,7 @@ WSGI_APPLICATION = 'pymastery.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 import dj_database_url
-DATABASES = {
+DATABASE_URL = {
     'default': dj_database_url.config(
         default='postgres://postgres:12345@localhost:5432/PYMASTERYDB',
         conn_max_age=600
