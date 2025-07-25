@@ -7,6 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 
 # === Django Setup ===
@@ -21,8 +22,9 @@ chrome_options.add_argument("--start-maximized")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--ignore-certificate-errors")
- 
-service = Service(r"C:\Users\Hp\PYMASTERY\example\chromedriver.exe")
+
+# ✅ Use webdriver-manager to auto-manage ChromeDriver
+service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
 # === GFG TOC Page ===
@@ -77,7 +79,7 @@ for link in links:
 print(f"🔗 Found {len(tutorials)} valid tutorials.")
 
 # === Reopen browser for scraping ===
-driver = webdriver.Chrome(service=service, options=chrome_options)
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 
 # === Scrape and Save Lessons + Quiz ===
 for index, (title, href) in enumerate(tutorials):

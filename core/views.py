@@ -1,7 +1,6 @@
 import json
-import os
 import re
-import pygemini
+import os
 import requests
 from dotenv import load_dotenv
 from django.shortcuts import render, get_object_or_404, redirect
@@ -25,7 +24,7 @@ from .forms import CourseForm
 
 # Load env variables
 load_dotenv()
-GEMINI_API_KEY ="AIzaSyDUKAYNttTpvyilioaF9BfbPDEmw6g2ljQ"
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 
 # ✅ Home page
@@ -273,11 +272,8 @@ def create_course(request):
 
 # ✅ Gemini AI assistant
 from django.http import JsonResponse, HttpResponseBadRequest
-import os
-import pygemini
 import json
 
-import pygemini
 
 
 import os
@@ -292,12 +288,12 @@ def get_gemini_explanation(request):
             if not code_snippet:
                 return JsonResponse({'error': 'No code provided.'}, status=400)
 
-            gemini_api_key = "own api key"
-            if not gemini_api_key:
+            GEMINI_API_KEY = "AIzaSyCD-NCNP3Q1QbtGcH2zhySzRSWP68S_Otk"
+            if not GEMINI_API_KEY:
                 return JsonResponse({'error': 'Gemini API key not configured.'}, status=500)
 
             # Configure Gemini client
-            genai.configure(api_key=gemini_api_key)
+            genai.configure(api_key=GEMINI_API_KEY)
 
             # Initialize the model (using 'gemini-2.0-flash' for text)
             model = genai.GenerativeModel('gemini-2.0-flash')
@@ -353,8 +349,8 @@ from django.contrib import messages
 from .models import Lesson, Quiz, Question, Option
 
 
-GEMINI_API_KEY = "AIzaSyDUKAYNttTpvyilioaF9BfbPDEmw6g2ljQ"  # make sure this is set in your settings
 
+GEMINI_API_KEY = "AIzaSyCD-NCNP3Q1QbtGcH2zhySzRSWP68S_Otk"
 def generate_prompt(title, content, difficulty, num_questions):
     return f"""
 You are an expert educational AI quiz generator.
@@ -418,6 +414,7 @@ def generate_ai_quiz(request, lesson_id):
 
         try:
             quiz_data = json.loads(text)
+            
         except Exception:
             messages.error(request, "Failed to parse AI output.")
             return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
