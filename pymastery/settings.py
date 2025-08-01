@@ -150,4 +150,4 @@ CKEDITOR_UPLOAD_PATH = "uploads/"
 # settings.py
 import os
 
-GEMINI_API_KEY = "AIzaSyCD-NCNP3Q1QbtGcH2zhySzRSWP68S_Otk"
+GEMINI_API_KEY = "AIzaSyBBQosOXYbKNUA5490LcvTT4D9_znWr6hs"

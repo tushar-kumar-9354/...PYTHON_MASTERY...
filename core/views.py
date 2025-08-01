@@ -288,7 +288,7 @@ def get_gemini_explanation(request):
             if not code_snippet:
                 return JsonResponse({'error': 'No code provided.'}, status=400)
 
-            GEMINI_API_KEY = "AIzaSyCD-NCNP3Q1QbtGcH2zhySzRSWP68S_Otk"
+            GEMINI_API_KEY = "AIzaSyBBQosOXYbKNUA5490LcvTT4D9_znWr6hs"
             if not GEMINI_API_KEY:
                 return JsonResponse({'error': 'Gemini API key not configured.'}, status=500)
 
@@ -350,7 +350,7 @@ from .models import Lesson, Quiz, Question, Option
 
 
 
-GEMINI_API_KEY = "AIzaSyCD-NCNP3Q1QbtGcH2zhySzRSWP68S_Otk"
+GEMINI_API_KEY = "AIzaSyBBQosOXYbKNUA5490LcvTT4D9_znWr6hs"
 def generate_prompt(title, content, difficulty, num_questions):
     return f"""
 You are an expert educational AI quiz generator.
