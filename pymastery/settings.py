@@ -83,10 +83,10 @@ WSGI_APPLICATION = 'pymastery.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'pymasterydb',
+        'NAME': 'pymasterydb_n6by',
         'USER': 'pymasteruser',
-        'PASSWORD': 'Cb5nW78nYv46YtXrSmCV89yjhfpAc5iu',
-        'HOST': 'dpg-d21lstnfte5s73fpb6a0-a.oregon-postgres.render.com',
+        'PASSWORD': 'yxt2D7WzBn5LJ4PPJpbuMOAq2NpHeC9s',
+        'HOST': 'dpg-d2oq7lripnbc73a4ribg-a.oregon-postgres.render.com',
         'PORT': '5432',
     }
 }
