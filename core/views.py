@@ -24,7 +24,7 @@ from .forms import CourseForm
 
 # Load env variables
 load_dotenv()
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+GEMINI_API_KEY = "AIzaSyDe_FmuHfGTgKEAMHPk94Zd6Q4cBJuEj_c"
 
 
 # ✅ Home page
@@ -288,7 +288,7 @@ def get_gemini_explanation(request):
             if not code_snippet:
                 return JsonResponse({'error': 'No code provided.'}, status=400)
 
-            GEMINI_API_KEY = "AIzaSyBBQosOXYbKNUA5490LcvTT4D9_znWr6hs"
+            GEMINI_API_KEY = "AIzaSyDe_FmuHfGTgKEAMHPk94Zd6Q4cBJuEj_c"
             if not GEMINI_API_KEY:
                 return JsonResponse({'error': 'Gemini API key not configured.'}, status=500)
 
@@ -350,7 +350,7 @@ from .models import Lesson, Quiz, Question, Option
 
 
 
-GEMINI_API_KEY = "AIzaSyBBQosOXYbKNUA5490LcvTT4D9_znWr6hs"
+GEMINI_API_KEY = "AIzaSyDe_FmuHfGTgKEAMHPk94Zd6Q4cBJuEj_c"
 def generate_prompt(title, content, difficulty, num_questions):
     return f"""
 You are an expert educational AI quiz generator.
@@ -395,7 +395,7 @@ def generate_ai_quiz(request, lesson_id):
         # Call Gemini 2.0 Flash
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
         r = requests.post(
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
             params={"key": GEMINI_API_KEY},
             json=payload,
             headers={"Content-Type": "application/json"},
@@ -413,6 +413,7 @@ def generate_ai_quiz(request, lesson_id):
         text = re.sub(r"\s*```$", "", text)
 
         try:
+            print("AI Output:", text)  # Debug log
             quiz_data = json.loads(text)
             
         except Exception:
@@ -449,6 +450,7 @@ def save_ai_quiz(request, lesson_id):
 
         try:
             quiz_data = json.loads(quiz_data_json)
+            print("Quiz Data Loaded:", quiz_data)  # Debug log
         except json.JSONDecodeError:
             return render(request, "core/error.html", {"message": "Invalid quiz data."})
 

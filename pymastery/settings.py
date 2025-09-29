@@ -82,12 +82,8 @@ WSGI_APPLICATION = 'pymastery.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'pymasterydb_n6by',
-        'USER': 'pymasteruser',
-        'PASSWORD': 'yxt2D7WzBn5LJ4PPJpbuMOAq2NpHeC9s',
-        'HOST': 'dpg-d2oq7lripnbc73a4ribg-a.oregon-postgres.render.com',
-        'PORT': '5432',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / "db.sqlite3",  # creates db.sqlite3 file in project root
     }
 }
 
@@ -150,4 +146,4 @@ CKEDITOR_UPLOAD_PATH = "uploads/"
 # settings.py
 import os
 
-GEMINI_API_KEY = "AIzaSyBBQosOXYbKNUA5490LcvTT4D9_znWr6hs"
+GEMINI_API_KEY = "AIzaSyDe_FmuHfGTgKEAMHPk94Zd6Q4cBJuEj_c"
