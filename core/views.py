@@ -377,6 +377,11 @@ Instructions:
 Do not wrap the JSON in markdown or code fences.
 """
 
+import json, re, requests
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
+
 @csrf_exempt
 def generate_ai_quiz(request, lesson_id):
     lesson = get_object_or_404(Lesson, id=lesson_id)
@@ -392,43 +397,53 @@ def generate_ai_quiz(request, lesson_id):
         trimmed_content = lesson.content[:3000]
         prompt = generate_prompt(lesson.title, trimmed_content, difficulty, num_questions)
 
-        # Call Gemini 2.0 Flash
+        # Call Gemini 1.5 Flash
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
-        r = requests.post(
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-            params={"key": GEMINI_API_KEY},
-            json=payload,
-            headers={"Content-Type": "application/json"},
-            timeout=30
-        )
-        result = r.json()
+        try:
+            print("[DEBUG] Sending request to Gemini API...")
+            r = requests.post(
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+                params={"key": GEMINI_API_KEY},
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=30
+            )
+            print("[DEBUG] Gemini API Status:", r.status_code)
+            result = r.json()
+            print("[DEBUG] Raw Gemini Response:", json.dumps(result, indent=2))
+        except Exception as e:
+            print("[ERROR] Gemini API call failed:", str(e))
+            messages.error(request, "Failed to reach Gemini API.")
+            return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
 
         if "candidates" not in result or not result["candidates"]:
+            print("[ERROR] No candidates returned by Gemini")
             messages.error(request, "AI returned no quiz data.")
             return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
 
         text = result["candidates"][0]["content"]["parts"][0].get("text", "").strip()
+        print("[DEBUG] Raw AI Output:", text)
+
         # Remove any accidental fences
         text = re.sub(r"^```(?:json)?\s*", "", text)
         text = re.sub(r"\s*```$", "", text)
+        print("[DEBUG] Cleaned AI Output:", text)
 
         try:
-            print("AI Output:", text)  # Debug log
             quiz_data = json.loads(text)
-            
-        except Exception:
-            messages.error(request, "Failed to parse AI output.")
+            print("[DEBUG] Parsed quiz_data:", quiz_data)
+        except json.JSONDecodeError as e:
+            print("[ERROR] JSON parsing failed:", str(e))
+            print("[DEBUG] First 500 chars of AI output:", text[:500])
+            messages.error(request, "Failed to parse AI output as JSON.")
             return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
-
-
-# … inside generate_ai_quiz after quiz_data = json.loads(text) …
 
         quiz_json = json.dumps(quiz_data)
 
         return render(request, "core/ai_quiz_preview.html", {
             "lesson": lesson,
-            "quiz_data": quiz_data,       # for rendering questions
-            "quiz_json": quiz_json,       # the valid JSON string
+            "quiz_data": quiz_data,
+            "quiz_json": quiz_json,
             "difficulty": difficulty,
             "num_questions": num_questions
         })
