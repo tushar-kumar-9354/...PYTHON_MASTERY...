@@ -280,7 +280,23 @@ import os
 from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
 import google.generativeai as genai
 from dotenv import load_dotenv
-load_dotenv()  # Before accessing os.getenv()
+import os
+import json
+import re
+import requests
+from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib import messages
+import google.generativeai as genai
+from dotenv import load_dotenv
+from .models import Lesson, Quiz, Question, Option
+
+load_dotenv()
+
+# Use a single API key - move this to environment variables
+GEMINI_API_KEY = "AIzaSyC5md5wEUkAjaFgWmko-YmG0qppFdubUJg"  # Use one consistent key
+
 def get_gemini_explanation(request):
     if request.method == 'POST':
         try:
@@ -288,69 +304,46 @@ def get_gemini_explanation(request):
             if not code_snippet:
                 return JsonResponse({'error': 'No code provided.'}, status=400)
 
-            GEMINI_API_KEY = "AIzaSyDe_FmuHfGTgKEAMHPk94Zd6Q4cBJuEj_c"
             if not GEMINI_API_KEY:
                 return JsonResponse({'error': 'Gemini API key not configured.'}, status=500)
 
-            # Configure Gemini client
             genai.configure(api_key=GEMINI_API_KEY)
-
-            # Initialize the model (using 'gemini-2.0-flash' for text)
-            model = genai.GenerativeModel('gemini-2.0-flash')
+            model = genai.GenerativeModel('gemini-2.0-flash')  # Use consistent model
             
-            # Generate explanation
             prompt = f"""
-                    You are an AI Python Language Assistant integrated into an online course platform.
+You are an AI Python Language Assistant integrated into an online course platform.
 
-                    When a user types something like:
-                    - "Summarize the above lesson"
-                    - "Explain the above code"
-                    - "Give a simple explanation of this chapter"
+When a user types something like:
+- "Summarize the above lesson"
+- "Explain the above code"
+- "Give a simple explanation of this chapter"
 
-                    ...you should:
-                    1. Automatically refer to the **Python lesson content that appears just above the chat box** (assume you have access to it).
-                    2. Provide a **clear, beginner-friendly summary** of that content.
-                    3. Include:
-                    - ✅ What is this.
-                    - ✅ What the function or concept does.
-                    - ✅ How it works (step-by-step if needed).
-                    - ✅ Key functions/keywords used.
-                    4. If code is included:
-                    - 🧠 Break it down step-by-step.
-                    - 📌 Use headings, bullet points, and code blocks for clarity.
+...you should:
+1. Automatically refer to the **Python lesson content that appears just above the chat box** (assume you have access to it).
+2. Provide a **clear, beginner-friendly summary** of that content.
+3. Include:
+- ✅ What is this.
+- ✅ What the function or concept does.
+- ✅ How it works (step-by-step if needed).
+- ✅ Key functions/keywords used.
+4. If code is included:
+- 🧠 Break it down step-by-step.
+- 📌 Use headings, bullet points, and code blocks for clarity.
 
-                    Your goal is to make the lesson easy to understand like a Python tutor would.
-
-
+Your goal is to make the lesson easy to understand like a Python tutor would.
 
 {code_snippet}"""
-            response = model.generate_content(prompt)
             
-            # Return the generated text
+            response = model.generate_content(prompt)
             explanation = response.text
             return HttpResponse(f"<pre>{explanation}</pre>")
 
         except Exception as e:
-            print("Gemini Error:", str(e))  # Log error to console
+            print("Gemini Error:", str(e))
             return JsonResponse({'error': f'AI error: {str(e)}'}, status=500)
 
     return HttpResponseBadRequest("Only POST requests are allowed.")
 
-
-# Pull this from settings or env in production
-
-
-import json
-import re
-import requests
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib import messages
-from .models import Lesson, Quiz, Question, Option
-
-
-
-GEMINI_API_KEY = "AIzaSyDe_FmuHfGTgKEAMHPk94Zd6Q4cBJuEj_c"
 def generate_prompt(title, content, difficulty, num_questions):
     return f"""
 You are an expert educational AI quiz generator.
@@ -370,17 +363,13 @@ Instructions:
   {{
     "question": "Question text?",
     "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correct_index": 2
+    "correct_index": 0
   }}
 ]
 
+Important: correct_index must be 0, 1, 2, or 3 (zero-based index).
 Do not wrap the JSON in markdown or code fences.
 """
-
-import json, re, requests
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib import messages
-from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
 def generate_ai_quiz(request, lesson_id):
@@ -397,58 +386,67 @@ def generate_ai_quiz(request, lesson_id):
         trimmed_content = lesson.content[:3000]
         prompt = generate_prompt(lesson.title, trimmed_content, difficulty, num_questions)
 
-        # Call Gemini 1.5 Flash
-        payload = {"contents": [{"parts": [{"text": prompt}]}]}
         try:
-            print("[DEBUG] Sending request to Gemini API...")
-            r = requests.post(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
-                params={"key": GEMINI_API_KEY},
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=30
-            )
-            print("[DEBUG] Gemini API Status:", r.status_code)
-            result = r.json()
-            print("[DEBUG] Raw Gemini Response:", json.dumps(result, indent=2))
+            # Call Gemini using the same method as get_gemini_explanation
+            genai.configure(api_key=GEMINI_API_KEY)
+            model = genai.GenerativeModel('gemini-2.0-flash')
+            response = model.generate_content(prompt)
+            text = response.text.strip()
+            
+            # Debug: Print the raw response
+            print("Raw AI Response:", text)
+            
+            # Remove any accidental markdown fences
+            text = re.sub(r"^```(?:json)?\s*", "", text)
+            text = re.sub(r"\s*```$", "", text)
+            text = text.strip()
+
+            try:
+                quiz_data = json.loads(text)
+                print("Parsed quiz data:", quiz_data)
+                
+                # Validate the structure
+                if not isinstance(quiz_data, list):
+                    messages.error(request, "AI returned invalid format: expected list of questions")
+                    return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
+                
+                # Validate each question
+                for i, question in enumerate(quiz_data):
+                    if not all(key in question for key in ['question', 'options', 'correct_index']):
+                        messages.error(request, f"Question {i+1} missing required fields")
+                        return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
+                    
+                    if len(question['options']) != 4:
+                        messages.error(request, f"Question {i+1} must have exactly 4 options")
+                        return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
+                    
+                    if not 0 <= question['correct_index'] <= 3:
+                        messages.error(request, f"Question {i+1} has invalid correct_index (must be 0-3)")
+                        return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
+
+                quiz_json = json.dumps(quiz_data)
+
+                return render(request, "core/ai_quiz_preview.html", {
+                    "lesson": lesson,
+                    "quiz_data": quiz_data,
+                    "quiz_json": quiz_json,
+                    "difficulty": difficulty,
+                    "num_questions": num_questions
+                })
+
+            except json.JSONDecodeError as e:
+                print(f"JSON parse error: {e}")
+                print(f"Text that failed to parse: {text}")
+                messages.error(request, f"Failed to parse AI output as JSON: {str(e)}")
+                return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
+
         except Exception as e:
-            print("[ERROR] Gemini API call failed:", str(e))
-            messages.error(request, "Failed to reach Gemini API.")
+            print(f"API call error: {e}")
+            messages.error(request, f"AI service error: {str(e)}")
             return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
 
-        if "candidates" not in result or not result["candidates"]:
-            print("[ERROR] No candidates returned by Gemini")
-            messages.error(request, "AI returned no quiz data.")
-            return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
-
-        text = result["candidates"][0]["content"]["parts"][0].get("text", "").strip()
-        print("[DEBUG] Raw AI Output:", text)
-
-        # Remove any accidental fences
-        text = re.sub(r"^```(?:json)?\s*", "", text)
-        text = re.sub(r"\s*```$", "", text)
-        print("[DEBUG] Cleaned AI Output:", text)
-
-        try:
-            quiz_data = json.loads(text)
-            print("[DEBUG] Parsed quiz_data:", quiz_data)
-        except json.JSONDecodeError as e:
-            print("[ERROR] JSON parsing failed:", str(e))
-            print("[DEBUG] First 500 chars of AI output:", text[:500])
-            messages.error(request, "Failed to parse AI output as JSON.")
-            return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
-
-        quiz_json = json.dumps(quiz_data)
-
-        return render(request, "core/ai_quiz_preview.html", {
-            "lesson": lesson,
-            "quiz_data": quiz_data,
-            "quiz_json": quiz_json,
-            "difficulty": difficulty,
-            "num_questions": num_questions
-        })
-
-
+    # If not POST, redirect back
+    return redirect("lesson_detail", course_id=lesson.course.id, lesson_id=lesson.id)
     # Dump back to JSON with proper double quotes
    
 from django.shortcuts import render, get_object_or_404, redirect
@@ -465,7 +463,6 @@ def save_ai_quiz(request, lesson_id):
 
         try:
             quiz_data = json.loads(quiz_data_json)
-            print("Quiz Data Loaded:", quiz_data)  # Debug log
         except json.JSONDecodeError:
             return render(request, "core/error.html", {"message": "Invalid quiz data."})
 
