@@ -144,6 +144,6 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 CKEDITOR_UPLOAD_PATH = "uploads/"
 # settings.py
-import os
 
-GEMINI_API_KEY = "AIzaSyDe_FmuHfGTgKEAMHPk94Zd6Q4cBJuEj_c"
+
+GEMINI_API_KEY = "AIzaSyCXlmdA2thYWcodK_eE-Gef1NHrlKBo02c"

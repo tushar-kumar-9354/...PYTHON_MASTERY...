@@ -24,7 +24,7 @@ from .forms import CourseForm
 
 # Load env variables
 load_dotenv()
-GEMINI_API_KEY = "AIzaSyDe_FmuHfGTgKEAMHPk94Zd6Q4cBJuEj_c"
+GEMINI_API_KEY = "AIzaSyCXlmdA2thYWcodK_eE-Gef1NHrlKBo02c"
 
 
 # ✅ Home page
@@ -295,7 +295,7 @@ from .models import Lesson, Quiz, Question, Option
 load_dotenv()
 
 # Use a single API key - move this to environment variables
-GEMINI_API_KEY = "AIzaSyC5md5wEUkAjaFgWmko-YmG0qppFdubUJg"  # Use one consistent key
+ # Use one consistent key
 
 def get_gemini_explanation(request):
     if request.method == 'POST':
@@ -308,7 +308,7 @@ def get_gemini_explanation(request):
                 return JsonResponse({'error': 'Gemini API key not configured.'}, status=500)
 
             genai.configure(api_key=GEMINI_API_KEY)
-            model = genai.GenerativeModel('gemini-2.0-flash')  # Use consistent model
+            model = genai.GenerativeModel('gemini-2.5-flash')  # Use consistent model
             
             prompt = f"""
 You are an AI Python Language Assistant integrated into an online course platform.
@@ -389,7 +389,7 @@ def generate_ai_quiz(request, lesson_id):
         try:
             # Call Gemini using the same method as get_gemini_explanation
             genai.configure(api_key=GEMINI_API_KEY)
-            model = genai.GenerativeModel('gemini-2.0-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             response = model.generate_content(prompt)
             text = response.text.strip()
             
