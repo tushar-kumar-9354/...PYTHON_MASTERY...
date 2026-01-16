@@ -146,4 +146,7 @@ CKEDITOR_UPLOAD_PATH = "uploads/"
 # settings.py
 
 
-GEMINI_API_KEY = "AIzaSyCXlmdA2thYWcodK_eE-Gef1NHrlKBo02c"
+# settings.py - Update these lines:
+GEMINI_API_KEY = "AIzaSyA_NReqnryUk7hpyouKS23j7TOTOI8nSqE"
+# Remove or comment out this line:
+# GEMINI_API_KEY_FOR_QUIZ = os.getenv('GEMINI_API_KEY_FOR_QUIZ')

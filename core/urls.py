@@ -20,6 +20,9 @@ urlpatterns = [
     path('lesson/<int:lesson_id>/save_ai_quiz/', views.save_ai_quiz, name='save_ai_quiz'),
     path('lessons/<int:lesson_id>/quizzes/<int:quiz_id>/', views.take_quiz, name='take_quiz'),
     path('quizzes/result/<int:attempt_id>/', views.quiz_result, name='quiz_result'),
+    path('test-api/', views.test_api_key, name='test_api'),
+    path('test-api-1/', views.test_api_key_1, name='test_api-1'),
+    path('token-dashboard/', views.token_usage_dashboard, name='token_dashboard'),
+    path('reset-tokens/', views.reset_token_counts, name='reset_tokens'),
     
-   
 ]
